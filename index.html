@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#3F5D52">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Qi TCM — Bill</title>
 <style>
 :root{
@@ -85,6 +88,13 @@ main{padding:14px;max-width:1200px;margin:0 auto;padding-bottom:calc(20px + env(
 .scope button{padding:9px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:13px;color:var(--ink-soft);min-height:44px;line-height:1.25}
 .scope button.on{border-color:var(--jade);background:#E7EFEA;color:var(--jade);font-weight:600;box-shadow:inset 0 0 0 1px var(--jade)}
 .discNote{font-size:12.5px;color:var(--ink-soft);margin-top:7px}
+.when{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.when button{padding:9px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:13.5px;color:var(--ink-soft);min-height:44px}
+.when button.on{border-color:var(--jade);background:#E7EFEA;color:var(--jade);font-weight:600;box-shadow:inset 0 0 0 1px var(--jade)}
+.whenIn{width:100%;margin-top:8px;padding:11px 12px;border:1px solid var(--cinnabar);border-radius:8px;background:#fff;min-height:46px;color:var(--ink)}
+.whenIn[hidden]{display:none}
+.whenNote{font-size:12.5px;color:var(--ink-soft);margin-top:7px}
+.whenNote.back{color:var(--cinnabar);font-weight:600}
 
 .total{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;padding-top:12px;border-top:2px solid var(--ink)}
 .total span{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
@@ -148,8 +158,9 @@ table.sh td small{display:block;font-family:var(--sans);font-size:11.5px;color:v
 .seal{position:absolute;right:4px;bottom:-4px;width:96px;height:96px;border:3px solid var(--cinnabar);border-radius:6px;
   color:var(--cinnabar);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
   opacity:.92;transform:rotate(-7deg);padding:4px}
-.seal em{font-style:normal;font-size:26px;font-weight:700;line-height:1.05;letter-spacing:.03em}
-.seal small{font-family:var(--sans);font-size:10px;letter-spacing:.03em;margin-top:5px;line-height:1.2}
+.seal em{font-style:normal;font-size:24px;font-weight:700;line-height:1.05;letter-spacing:.03em}
+.seal small{font-family:var(--sans);font-size:9.5px;letter-spacing:.02em;margin-top:4px;line-height:1.25;display:block}
+.seal small + small{margin-top:1px}
 .seal.press{animation:press .4s cubic-bezier(.2,1.5,.4,1) both}
 @keyframes press{0%{opacity:0;transform:rotate(-24deg) scale(2.2)}70%{opacity:1;transform:rotate(-5deg) scale(.93)}100%{opacity:.92;transform:rotate(-7deg) scale(1)}}
 @media(prefers-reduced-motion:reduce){.seal.press{animation:none}.chip{transition:none}}
@@ -220,6 +231,15 @@ table.sh td small{display:block;font-family:var(--sans);font-size:11.5px;color:v
         <div class="card">
           <h2>Customer</h2>
           <label class="field"><span>Name</span><input id="cName" autocomplete="off" placeholder="Customer name"></label>
+          <div class="field">
+            <span>Date &amp; time of visit</span>
+            <div class="when" role="group" aria-label="Date and time of visit">
+              <button data-when="now" class="on">Now</button>
+              <button data-when="pick">Choose date &amp; time</button>
+            </div>
+            <input class="whenIn" id="whenIn" type="datetime-local" hidden aria-label="Visit date and time">
+            <div class="whenNote" id="whenNote"></div>
+          </div>
         </div>
         <div class="card">
           <h2>This visit</h2>
@@ -365,7 +385,7 @@ var DEFAULT_SETTINGS = {
 var settings   = Object.assign({}, DEFAULT_SETTINGS, load("cfg2",{}));
 var treatments = load("tx2", DEFAULT_TX);
 var bills      = load("bills2", []);
-var draft      = { name:"", items:[], disc:{ m:"pct", v:0, s:"treat" } };
+var draft      = { name:"", items:[], disc:{ m:"pct", v:0, s:"treat" }, whenMode:"now", when:null };
 var shown      = null;
 
 /* ---------- helpers ---------- */
@@ -376,6 +396,18 @@ var SCOPES = { treat:"treatments", tc:"treatments and consultation" };
 
 function money(n){ return "RM " + (Math.round(n*100)/100).toFixed(2); }
 function fmtDate(iso){ var d = new Date(iso); return d.getDate()+" "+MONTHS[d.getMonth()]+" "+d.getFullYear(); }
+function fmtTime(iso){
+  var d = new Date(iso), h = d.getHours(), m = d.getMinutes();
+  var ap = h < 12 ? "am" : "pm";
+  h = h % 12; if (h === 0) h = 12;
+  return h + ":" + String(m).padStart(2,"0") + " " + ap;
+}
+function csvTime(iso){ var d = new Date(iso); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+/* value for a datetime-local input, in the tablet's own timezone */
+function localInputValue(d){
+  var p = function(n){ return String(n).padStart(2,"0"); };
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"T"+p(d.getHours())+":"+p(d.getMinutes());
+}
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 function toast(m){ var t=$("toast"); t.textContent=m; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(function(){ t.hidden=true; },2600); }
 function billNo(seq){ return (settings.prefix?settings.prefix+"-":"") + new Date().getFullYear() + "-" + String(seq).padStart(4,"0"); }
@@ -506,10 +538,44 @@ Array.prototype.forEach.call(document.querySelectorAll(".scope button"), functio
 
 $("cName").addEventListener("input", function(e){ draft.name = e.target.value; });
 
+/* ---------- date & time of visit ---------- */
+function setWhenMode(mode){
+  draft.whenMode = mode;
+  Array.prototype.forEach.call(document.querySelectorAll(".when button"), function(b){
+    b.classList.toggle("on", b.dataset.when === mode);
+  });
+  var input = $("whenIn");
+  input.hidden = (mode !== "pick");
+  if (mode === "pick"){
+    if (!input.value) input.value = localInputValue(new Date());
+    draft.when = input.value;
+  } else {
+    draft.when = null;
+  }
+  updateWhenNote();
+}
+function updateWhenNote(){
+  var note = $("whenNote");
+  if (draft.whenMode === "pick" && draft.when){
+    var d = new Date(draft.when);
+    note.textContent = "Recorded as " + fmtDate(d) + " at " + fmtTime(d) + " · marked backdated";
+    note.className = "whenNote back";
+  } else {
+    note.textContent = "Uses the clock when you issue the bill.";
+    note.className = "whenNote";
+  }
+}
+Array.prototype.forEach.call(document.querySelectorAll(".when button"), function(btn){
+  btn.addEventListener("click", function(){ setWhenMode(btn.dataset.when); });
+});
+$("whenIn").addEventListener("input", function(e){ draft.when = e.target.value; updateWhenNote(); });
+
 function resetDraft(){
-  draft = { name:"", items:[], disc:{ m:draft.disc.m, v:0, s:draft.disc.s } };
+  draft = { name:"", items:[], disc:{ m:draft.disc.m, v:0, s:draft.disc.s }, whenMode:"now", when:null };
   $("cName").value = "";
   $("discVal").value = "0";
+  $("whenIn").value = "";
+  setWhenMode("now");
   renderDraft(); renderChips();
 }
 $("btnClear").addEventListener("click", function(){
@@ -520,9 +586,13 @@ $("btnClear").addEventListener("click", function(){
 /* ---------- build + show ---------- */
 function draftToBill(issued){
   var t = totals(draft.items, draft.disc);
+  var backdated = draft.whenMode === "pick" && !!draft.when;
+  var when = backdated ? new Date(draft.when) : new Date();
   return {
     no: issued ? billNo(settings.next) : null,
-    date: new Date().toISOString(),
+    date: when.toISOString(),
+    issuedAt: new Date().toISOString(),
+    mode: backdated ? "backdated" : "real-time",
     name: draft.name.trim(),
     items: draft.items.map(function(i){ return { n:i.n, p:i.p, q:i.q, c:i.c, d:i.d||"" }; }),
     disc: { m:draft.disc.m, v:draft.disc.v, s:draft.disc.s },
@@ -544,7 +614,7 @@ function renderSheet(bill, animate){
     : "";
 
   var seal = bill.no
-    ? "<div class='seal"+(animate?" press":"")+"'><em>"+esc(settings.seal||"Qi")+"</em><small>"+fmtDate(bill.date)+"</small></div>"
+    ? "<div class='seal"+(animate?" press":"")+"'><em>"+esc(settings.seal||"Qi")+"</em><small>"+fmtDate(bill.date)+"</small><small>"+fmtTime(bill.date)+"</small></div>"
     : "";
 
   $("sheet").innerHTML =
@@ -730,10 +800,11 @@ function drawBill(bill){
     x.strokeStyle = "#A8322D"; x.lineWidth = 3.5;
     x.strokeRect(-48,-48,96,96);
     x.fillStyle = "#A8322D"; x.textAlign = "center";
-    x.font = "700 28px "+SERIF;
-    x.fillText(settings.seal || "Qi", 0, -2);
-    x.font = "11px "+SANS;
-    x.fillText(fmtDate(bill.date), 0, 24);
+    x.font = "700 26px "+SERIF;
+    x.fillText(settings.seal || "Qi", 0, -8);
+    x.font = "10.5px "+SANS;
+    x.fillText(fmtDate(bill.date), 0, 15);
+    x.fillText(fmtTime(bill.date), 0, 31);
     x.restore();
   }
   return c;
@@ -765,8 +836,10 @@ function renderRecords(){
     var btn = document.createElement("button");
     btn.className = "rec";
     btn.innerHTML = "<span class='rno'>"+esc(b.no)+"</span>"
-      + "<span class='rmid'><b>"+esc(b.name||"No name")+"</b><i>"+fmtDate(b.date)+" · "+b.items.length+" item"+(b.items.length===1?"":"s")
-      + (b.discAmt>0 ? " · −"+money(b.discAmt) : "")+"</i></span>"
+      + "<span class='rmid'><b>"+esc(b.name||"No name")+"</b><i>"+fmtDate(b.date)+", "+fmtTime(b.date)
+      + " · "+b.items.length+" item"+(b.items.length===1?"":"s")
+      + (b.discAmt>0 ? " · −"+money(b.discAmt) : "")
+      + (b.mode === "backdated" ? " · backdated" : "")+"</i></span>"
       + "<span class='ramt'>"+money(b.total)+"</span>";
     btn.addEventListener("click", function(){ renderSheet(b,false); });
     list.appendChild(btn);
@@ -804,11 +877,18 @@ function lineSubtotal(b, item){
 
 $("btnCsv").addEventListener("click", function(){
   if (!bills.length){ toast("No bills to export yet."); return; }
-  var rows = [["bill_no","date","customer","category","item","qty","unit_price","line_total","line_subtotal",
-               "bill_subtotal","discount_applies_to","bill_discount","bill_total"]];
+  var rows = [["bill_no","date","time","entry_mode","issued_at","customer","category","item","qty",
+               "unit_price","line_total","line_subtotal","bill_subtotal","discount_applies_to",
+               "bill_discount","bill_total"]];
   bills.slice().reverse().forEach(function(b){
+    var d = new Date(b.date);
+    var issued = b.issuedAt ? new Date(b.issuedAt) : d;
     b.items.forEach(function(i){
-      rows.push([b.no, b.date.slice(0,10), b.name, CATS[i.c]||i.c, i.n, i.q, i.p.toFixed(2), (i.p*i.q).toFixed(2),
+      rows.push([b.no,
+                 localInputValue(d).slice(0,10), csvTime(b.date),
+                 b.mode || "real-time",
+                 localInputValue(issued).replace("T"," "),
+                 b.name, CATS[i.c]||i.c, i.n, i.q, i.p.toFixed(2), (i.p*i.q).toFixed(2),
                  lineSubtotal(b, i).toFixed(2),
                  b.sub.toFixed(2), (b.discAmt>0 ? SCOPES[(b.disc&&b.disc.s)||"treat"] : ""),
                  (b.discAmt||0).toFixed(2), b.total.toFixed(2)]);
@@ -821,7 +901,7 @@ $("btnCsv").addEventListener("click", function(){
 
 $("btnBackup").addEventListener("click", function(){
   download("qi-tcm-backup-"+new Date().toISOString().slice(0,10)+".json",
-    JSON.stringify({ v:3, cfg:settings, tx:treatments, bills:bills }, null, 2), "application/json");
+    JSON.stringify({ v:4, cfg:settings, tx:treatments, bills:bills }, null, 2), "application/json");
   toast("Backup saved.");
 });
 
@@ -924,6 +1004,13 @@ Array.prototype.forEach.call(document.querySelectorAll("[data-add]"), function(b
 /* ---------- go ---------- */
 $("storeWarn").hidden = HAS_STORE;
 $("discMode").textContent = draft.disc.m === "pct" ? "%" : "RM";
+setWhenMode("now");
+
+if ("serviceWorker" in navigator){
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("sw.js").catch(function(){ /* file:// or offline — ignore */ });
+  });
+}
 fillSettings();
 renderChips();
 renderDraft();
