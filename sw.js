@@ -1,8 +1,15 @@
 /* Qi TCM bill app — offline support.
-   Strategy: try the network first so updates appear as soon as they're
-   uploaded, and fall back to the cached copy when there's no signal. */
 
-const CACHE = "qi-tcm-v2";
+   Bump VERSION on every release. It clears the previous cache and keeps the
+   worker in step with the app.
+
+   Strategy: network first, so a freshly uploaded version is picked up on the
+   next launch, with the cached copy served whenever there's no signal.
+   version.json is deliberately never cached — it's how the running app finds
+   out that a newer build has been published. */
+
+const VERSION = "1.4";
+const CACHE = "qi-tcm-v" + VERSION;
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
@@ -19,6 +26,14 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
+
+  // The version check must always hit the network, never the cache.
+  if (new URL(e.request.url).pathname.endsWith("/version.json")) {
+    e.respondWith(fetch(e.request).catch(() => new Response("{}", {
+      headers: { "Content-Type": "application/json" }
+    })));
+    return;
+  }
 
   e.respondWith(
     fetch(e.request)
