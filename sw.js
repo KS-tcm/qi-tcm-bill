@@ -2,7 +2,7 @@
    Strategy: try the network first so updates appear as soon as they're
    uploaded, and fall back to the cached copy when there's no signal. */
 
-const CACHE = "qi-tcm-v1";
+const CACHE = "qi-tcm-v2";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
@@ -32,4 +32,3 @@ self.addEventListener("fetch", (e) => {
       )
   );
 });
-

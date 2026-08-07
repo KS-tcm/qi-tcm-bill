@@ -88,6 +88,11 @@ main{padding:14px;max-width:1200px;margin:0 auto;padding-bottom:calc(20px + env(
 .scope button{padding:9px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:13px;color:var(--ink-soft);min-height:44px;line-height:1.25}
 .scope button.on{border-color:var(--jade);background:#E7EFEA;color:var(--jade);font-weight:600;box-shadow:inset 0 0 0 1px var(--jade)}
 .discNote{font-size:12.5px;color:var(--ink-soft);margin-top:7px}
+.pays{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.pays button{padding:9px 6px;border:1px solid var(--line);border-radius:8px;background:#fff;
+  font-size:13px;color:var(--ink-soft);min-height:44px;line-height:1.2}
+.pays button.on{border-color:var(--jade);background:#E7EFEA;color:var(--jade);font-weight:600;box-shadow:inset 0 0 0 1px var(--jade)}
+.optional{font-style:normal;color:var(--paper-soft);font-weight:400}
 .when{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .when button{padding:9px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:13.5px;color:var(--ink-soft);min-height:44px}
 .when button.on{border-color:var(--jade);background:#E7EFEA;color:var(--jade);font-weight:600;box-shadow:inset 0 0 0 1px var(--jade)}
@@ -165,13 +170,41 @@ table.sh td small{display:block;font-family:var(--sans);font-size:11.5px;color:v
 @keyframes press{0%{opacity:0;transform:rotate(-24deg) scale(2.2)}70%{opacity:1;transform:rotate(-5deg) scale(.93)}100%{opacity:.92;transform:rotate(-7deg) scale(1)}}
 @media(prefers-reduced-motion:reduce){.seal.press{animation:none}.chip{transition:none}}
 
+.sh-discnote{font-family:var(--sans);font-size:11.5px;color:var(--paper-soft);
+  padding:2px 0 0;line-height:1.45;text-align:right}
+.sh-void{font-family:var(--sans);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--cinnabar);font-weight:700;border:1px solid var(--cinnabar);border-radius:6px;
+  padding:8px 12px;margin-bottom:16px;text-align:center}
+.seal.voided{border-color:#8A8F8C;color:#8A8F8C;opacity:.85}
+.seal.voided em{font-size:19px;letter-spacing:.08em}
 .sheetbar{flex:none;display:grid;grid-template-columns:1fr 1fr;gap:10px;
   padding:12px 20px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--paper-edge);background:var(--paper)}
+.sheetbar.three{grid-template-columns:1fr 1fr 1fr}
 .sheetbar .btn{background:transparent;border-color:var(--paper-soft);color:var(--paper-soft)}
+.sheetbar .btn.danger{border-color:var(--cinnabar);color:var(--cinnabar)}
+.sheetbar .btn[hidden]{display:none}
 .sheetbar .btn.solid{background:var(--jade);border-color:var(--jade);color:#F2F6F3}
 
-.rec{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px;background:#fff;
-  border:1px solid var(--line);border-radius:9px;margin-bottom:8px;min-height:60px}
+.periods{display:flex;flex-wrap:wrap;gap:6px}
+.periods button{flex:1 1 auto;min-width:88px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;
+  background:#fff;font-size:13.5px;color:var(--ink-soft);min-height:44px}
+.periods button.on{border-color:var(--jade);background:#E7EFEA;color:var(--jade);font-weight:600;box-shadow:inset 0 0 0 1px var(--jade)}
+.range{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.range[hidden]{display:none}
+.range input{padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff;min-height:44px;color:var(--ink)}
+.periodNote{font-size:12.5px;color:var(--ink-soft);margin-top:9px}
+
+.rec.void{opacity:.62}
+.rec.void .rno,.rec.void .rmid b,.rec.void .ramt{text-decoration:line-through}
+.rec .vtag{flex:none;font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--cinnabar);
+  border:1px solid var(--cinnabar);border-radius:5px;padding:2px 6px}
+.rec{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;background:#fff;
+  border:1px solid var(--line);border-radius:9px;margin-bottom:8px;min-height:60px;flex-wrap:wrap}
+.recmain{flex:1 1 210px;display:flex;align-items:center;gap:12px;min-width:0;text-align:left;padding:6px 0}
+.pay{flex:0 0 auto;min-width:112px;padding:9px 8px;border:1px solid var(--line);border-radius:8px;
+  background:#fff;font-family:inherit;font-size:13px;color:var(--ink-soft);min-height:42px}
+.pay.set{border-color:var(--jade);color:var(--jade);font-weight:600;background:#F1F6F3}
+.pay:disabled{opacity:.45}
 .rec .rno{font-family:var(--serif);font-size:13px;color:var(--cinnabar);font-weight:700;flex:none;min-width:78px}
 .rec .rmid{flex:1;min-width:0}
 .rec .rmid b{display:block;font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -257,7 +290,16 @@ table.sh td small{display:block;font-family:var(--sans);font-size:11.5px;color:v
           </div>
           <div class="discNote" id="discNote"></div>
 
+          <div class="discNote" id="roundNote"></div>
           <div class="total"><span>Total</span><b id="draftTotal">—</b></div>
+          <div class="field" id="payField">
+            <span>Payment method <em class="optional">— optional, can be set later</em></span>
+            <div class="pays" role="group" aria-label="Payment method">
+              <button data-pay="Cash">Cash</button>
+              <button data-pay="TnG">TnG</button>
+              <button data-pay="DuitNow QR">DuitNow QR</button>
+            </div>
+          </div>
           <div class="actions">
             <button class="btn" id="btnEstimate">Show estimate</button>
             <button class="btn solid" id="btnIssue">Issue bill</button>
@@ -269,10 +311,25 @@ table.sh td small{display:block;font-family:var(--sans);font-size:11.5px;color:v
   </section>
 
   <section class="panel" id="panel-records" hidden>
+    <div class="card">
+      <h2>Period</h2>
+      <div class="periods" role="group" aria-label="Reporting period">
+        <button data-p="today">Today</button>
+        <button data-p="week">This week</button>
+        <button data-p="month">This month</button>
+        <button data-p="all">All time</button>
+        <button data-p="custom">Pick dates</button>
+      </div>
+      <div class="range" id="rangeBox" hidden>
+        <input type="date" id="rangeFrom" aria-label="From date">
+        <input type="date" id="rangeTo" aria-label="To date">
+      </div>
+      <div class="periodNote" id="periodNote"></div>
+    </div>
     <div class="stats">
-      <div class="stat"><u>This month</u><b id="stMonth">—</b></div>
+      <div class="stat"><u>Sales</u><b id="stSales">—</b></div>
       <div class="stat"><u>Bills</u><b id="stCount">—</b></div>
-      <div class="stat"><u>All time</u><b id="stAll">—</b></div>
+      <div class="stat"><u>Voided</u><b id="stVoid">—</b></div>
     </div>
     <div class="card">
       <h2>Issued bills</h2>
@@ -328,13 +385,15 @@ table.sh td small{display:block;font-family:var(--sans);font-size:11.5px;color:v
     <div class="card">
       <h2>Danger zone</h2>
       <div class="actions"><button class="btn danger wide" id="btnWipe">Erase all bills</button></div>
+      <p class="note" id="verNote"></p>
     </div>
   </section>
 </main>
 
 <div class="sheetwrap" id="sheetWrap" hidden>
   <div class="sheetscroll"><div class="sheet" id="sheet"></div></div>
-  <div class="sheetbar">
+  <div class="sheetbar" id="sheetBar">
+    <button class="btn danger" id="btnVoid" hidden>Void bill</button>
     <button class="btn" id="btnClose">Close</button>
     <button class="btn solid" id="btnShare">Send</button>
   </div>
@@ -385,10 +444,11 @@ var DEFAULT_SETTINGS = {
 var settings   = Object.assign({}, DEFAULT_SETTINGS, load("cfg2",{}));
 var treatments = load("tx2", DEFAULT_TX);
 var bills      = load("bills2", []);
-var draft      = { name:"", items:[], disc:{ m:"pct", v:0, s:"treat" }, whenMode:"now", when:null };
+var draft      = { name:"", items:[], disc:{ m:"pct", v:0, s:"treat" }, whenMode:"now", when:null, pay:"" };
 var shown      = null;
 
 /* ---------- helpers ---------- */
+var APP_VERSION = "1.3";
 var $ = function(id){ return document.getElementById(id); };
 var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 var CATS = { consult:"Consultation", treat:"Treatments", combo:"Combos" };
@@ -410,6 +470,33 @@ function localInputValue(d){
 }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 function toast(m){ var t=$("toast"); t.textContent=m; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(function(){ t.hidden=true; },2600); }
+function isVoid(b){ return b.status === "void"; }
+function live(list){ return list.filter(function(b){ return !isVoid(b); }); }
+var PAY_METHODS = ["Cash", "TnG", "DuitNow QR"];
+var CAT_WORDS = { consult:"consultation fees", treat:"treatments", combo:"combo packages" };
+
+/* Only name the categories that are actually on this bill and fall outside the
+   discount. If nothing on the bill is excluded, the note is unnecessary. */
+function discScopeNote(bill){
+  if (!bill.discAmt) return "";
+  var scope = (bill.disc && bill.disc.s) || "treat";
+  var by = { consult:0, treat:0, combo:0 };
+  bill.items.forEach(function(i){ by[i.c] = (by[i.c]||0) + i.p*i.q; });
+
+  var covered = scope === "tc" ? ["treat","consult"] : ["treat"];
+  var left = ["consult","combo"].filter(function(c){
+    return by[c] > 0 && covered.indexOf(c) === -1;
+  }).map(function(c){ return CAT_WORDS[c]; });
+
+  if (!left.length) return "";
+  var applies = scope === "tc" ? "treatments and consultation" : "treatments";
+  return "Discount applies to " + applies + " only, not to " + left.join(" or ") + ".";
+}
+function startOfDay(d){ var x = new Date(d); x.setHours(0,0,0,0); return x; }
+function startOfWeek(d){            /* weeks run Monday to Sunday */
+  var x = startOfDay(d), day = (x.getDay() + 6) % 7;
+  x.setDate(x.getDate() - day); return x;
+}
 function billNo(seq){ return (settings.prefix?settings.prefix+"-":"") + new Date().getFullYear() + "-" + String(seq).padStart(4,"0"); }
 
 function totals(items, disc){
@@ -420,7 +507,14 @@ function totals(items, disc){
   var d = 0;
   if (disc && disc.v > 0) d = disc.m === "pct" ? base * disc.v / 100 : disc.v;
   d = Math.round(Math.min(Math.max(d,0), base) * 100) / 100;
-  return { by:by, sub:sub, base:base, disc:d, total:Math.round((sub-d)*100)/100 };
+
+  /* charge whole ringgit only — always in the customer's favour, so she never
+     has to hand back coins. The epsilon keeps 149.00 from floating to 148. */
+  var net = Math.round((sub - d) * 100) / 100;
+  var rounded = Math.floor(net + 1e-9);
+  var adj = Math.round((net - rounded) * 100) / 100;
+
+  return { by:by, sub:sub, base:base, disc:d, net:net, roundAdj:adj, total:rounded };
 }
 
 /* ---------- tabs ---------- */
@@ -518,6 +612,9 @@ function updateTotal(){
   Array.prototype.forEach.call(document.querySelectorAll(".scope button"), function(b){
     b.classList.toggle("on", b.dataset.scope === draft.disc.s);
   });
+  $("roundNote").textContent = t.roundAdj > 0
+    ? "Rounded down from " + money(t.net) + " · " + money(t.roundAdj) + " off"
+    : "";
   $("discNote").textContent = draft.disc.v > 0
     ? "−" + money(t.disc) + " off " + money(t.base) + " of " + SCOPES[draft.disc.s]
     : "Applies to " + SCOPES[draft.disc.s] + " · " + money(t.base) + " eligible";
@@ -570,8 +667,22 @@ Array.prototype.forEach.call(document.querySelectorAll(".when button"), function
 });
 $("whenIn").addEventListener("input", function(e){ draft.when = e.target.value; updateWhenNote(); });
 
+/* ---------- payment method ---------- */
+function renderPayButtons(){
+  Array.prototype.forEach.call(document.querySelectorAll(".pays button"), function(b){
+    b.classList.toggle("on", b.dataset.pay === draft.pay);
+  });
+}
+Array.prototype.forEach.call(document.querySelectorAll(".pays button"), function(btn){
+  btn.addEventListener("click", function(){
+    draft.pay = (draft.pay === btn.dataset.pay) ? "" : btn.dataset.pay;
+    renderPayButtons();
+  });
+});
+
 function resetDraft(){
-  draft = { name:"", items:[], disc:{ m:draft.disc.m, v:0, s:draft.disc.s }, whenMode:"now", when:null };
+  draft = { name:"", items:[], disc:{ m:draft.disc.m, v:0, s:draft.disc.s }, whenMode:"now", when:null, pay:"" };
+  renderPayButtons();
   $("cName").value = "";
   $("discVal").value = "0";
   $("whenIn").value = "";
@@ -596,11 +707,16 @@ function draftToBill(issued){
     name: draft.name.trim(),
     items: draft.items.map(function(i){ return { n:i.n, p:i.p, q:i.q, c:i.c, d:i.d||"" }; }),
     disc: { m:draft.disc.m, v:draft.disc.v, s:draft.disc.s },
-    discAmt: t.disc, sub: t.sub, total: t.total
+    pay: draft.pay || "",
+    discAmt: t.disc, sub: t.sub, net: t.net, roundAdj: t.roundAdj, total: t.total
   };
 }
 
 function renderSheet(bill, animate){
+  var backdated = bill.mode === "backdated";
+  var voided = isVoid(bill);
+  var stampSrc = bill.issuedAt || bill.date;
+
   var rows = bill.items.map(function(i){
     return "<tr><td>"+esc(i.n)+(i.d?"<small>"+esc(i.d)+"</small>":"")+"</td>"
          + "<td class='qtycol'>×"+i.q+"</td>"
@@ -608,27 +724,47 @@ function renderSheet(bill, animate){
   }).join("");
 
   var meta = [settings.addr, settings.phone, settings.reg].filter(Boolean).map(esc).join("<br>");
-  var discRow = bill.discAmt > 0
-    ? "<div class='sh-sub'><span>Subtotal</span><span>"+money(bill.sub)+"</span></div>"
-      + "<div class='sh-sub cut'><span>Discount"+(bill.disc.m==="pct"?" ("+bill.disc.v+"%)":"")+"</span><span>−"+money(bill.discAmt)+"</span></div>"
-    : "";
 
-  var seal = bill.no
-    ? "<div class='seal"+(animate?" press":"")+"'><em>"+esc(settings.seal||"Qi")+"</em><small>"+fmtDate(bill.date)+"</small><small>"+fmtTime(bill.date)+"</small></div>"
-    : "";
+  var adj = bill.roundAdj || 0;
+  var discRow = "";
+  if (bill.discAmt > 0 || adj > 0){
+    discRow += "<div class='sh-sub'><span>Subtotal</span><span>"+money(bill.sub)+"</span></div>";
+    if (bill.discAmt > 0){
+      discRow += "<div class='sh-sub cut'><span>Discount"+(bill.disc.m==="pct"?" ("+bill.disc.v+"%)":"")
+               + "</span><span>−"+money(bill.discAmt)+"</span></div>";
+    }
+    if (adj > 0){
+      discRow += "<div class='sh-sub cut'><span>Rounded down</span><span>−"+money(adj)+"</span></div>";
+    }
+    if (discScopeNote(bill)) discRow += "<div class='sh-discnote'>"+esc(discScopeNote(bill))+"</div>";
+  }
+
+  var infoRows = "<tr><th>Customer</th><td>"+esc(bill.name || "—")+"</td></tr>";
+  if (backdated){
+    infoRows += "<tr><th>Visit</th><td>"+fmtDate(bill.date)+"<br>"+fmtTime(bill.date)+"</td></tr>"
+              + "<tr><th>Bill issued</th><td>"+fmtDate(stampSrc)+"</td></tr>";
+  } else {
+    infoRows += "<tr><th>Date</th><td>"+fmtDate(bill.date)+"</td></tr>";
+  }
+
+  var seal = "";
+  if (bill.no && voided){
+    seal = "<div class='seal voided'><em>VOID</em><small>"+fmtDate(bill.voidedAt||stampSrc)+"</small></div>";
+  } else if (bill.no){
+    seal = "<div class='seal"+(animate?" press":"")+"'><em>"+esc(settings.seal||"Qi")+"</em>"
+         + "<small>"+fmtDate(stampSrc)+"</small><small>"+fmtTime(stampSrc)+"</small></div>";
+  }
 
   $("sheet").innerHTML =
-    "<div class='sh-top'>"
+    (voided ? "<div class='sh-void'>Voided"+(bill.voidReason?" — "+esc(bill.voidReason):"")+"</div>" : "")
+    + "<div class='sh-top'>"
       + "<div class='sh-brand'>"
         + "<img class='sh-logo' src='"+LOGO_SRC+"' alt='"+esc(settings.name)+"'>"
         + (meta ? "<div class='sh-meta'>"+meta+"</div>" : "")
       + "</div>"
       + "<div class='sh-info'>"
         + "<div class='sh-kind'>"+(bill.no?"Bill":"Estimate")+"</div>"
-        + "<table class='sh-info-t'>"
-          + "<tr><th>Customer</th><td>"+esc(bill.name || "—")+"</td></tr>"
-          + "<tr><th>Date</th><td>"+fmtDate(bill.date)+"</td></tr>"
-        + "</table>"
+        + "<table class='sh-info-t'>"+infoRows+"</table>"
       + "</div>"
     + "</div>"
     + "<table class='sh'><thead><tr><th>Item</th><th class='qtycol'>Qty</th><th class='r'>Amount</th></tr></thead>"
@@ -637,6 +773,10 @@ function renderSheet(bill, animate){
     + "<div class='sh-total'><span>"+(bill.no?"Total":"Estimated total")+"</span><b>"+money(bill.total)+"</b></div>"
     + (settings.foot ? "<div class='sh-foot'>"+esc(settings.foot)+"</div>" : "")
     + seal;
+
+  var canVoid = !!bill.no && !voided && bills.indexOf(bill) !== -1;
+  $("btnVoid").hidden = !canVoid;
+  $("sheetBar").classList.toggle("three", canVoid);
 
   shown = bill;
   $("sheetWrap").hidden = false;
@@ -650,6 +790,20 @@ function closeSheet(){
 }
 $("btnClose").addEventListener("click", closeSheet);
 document.addEventListener("keydown", function(e){ if (e.key === "Escape" && !$("sheetWrap").hidden) closeSheet(); });
+
+$("btnVoid").addEventListener("click", function(){
+  if (!shown || !shown.no || isVoid(shown)) return;
+  if (!confirm("Void bill "+shown.no+"?\n\nIt stays in your records, marked void and excluded from all totals. It can't be un-voided \u2014 you issue a new bill instead.")) return;
+  var why = prompt("Reason (optional) \u2014 e.g. wrong name, wrong treatment:", "");
+  if (why === null) return;
+  shown.status = "void";
+  shown.voidedAt = new Date().toISOString();
+  shown.voidReason = (why || "").trim();
+  save("bills2", bills);
+  renderSheet(shown, false);
+  renderRecords();
+  toast("Bill voided.");
+});
 
 $("btnEstimate").addEventListener("click", function(){ renderSheet(draftToBill(false), false); });
 
@@ -693,14 +847,33 @@ function drawBill(bill){
 
   var VAL_FONT = "600 15px " + SANS;
 
-  var nameLines = wrap(bill.name || "—", VAL_FONT, 210);
+  var backdated = bill.mode === "backdated";
+  var voided = isVoid(bill);
+  var stampSrc = bill.issuedAt || bill.date;
+
+  var nameLines = wrap(bill.name || "—", VAL_FONT, 205);
+  var infoRows = [{ label:"CUSTOMER", lines:nameLines }];
+  if (backdated){
+    infoRows.push({ label:"VISIT", lines:[fmtDate(bill.date), fmtTime(bill.date)] });
+    infoRows.push({ label:"BILL ISSUED", lines:[fmtDate(stampSrc)] });
+  } else {
+    infoRows.push({ label:"DATE", lines:[fmtDate(bill.date)] });
+  }
+
+  var rowsH = 0;
+  infoRows.forEach(function(r, n){ rowsH += 24 + (r.lines.length - 1)*20 + (n < infoRows.length-1 ? 2 : 0); });
+
   var logoBlockH = logoH + (metaLines.length ? 9 + metaLines.length*19 : 0);
-  var infoBlockH = 12 + 30 + (nameLines.length - 1)*20 + 34 + 6;
-  var headerTop = 46;
+  var infoBlockH = 24 + rowsH;
+  var headerTop = 46 + (voided ? 44 : 0);
   var headerH = Math.max(logoBlockH, infoBlockH);
 
   var H = 118 + headerTop + headerH + bill.items.length*42 + descCount*18
-        + (bill.discAmt > 0 ? 56 : 0) + (settings.foot ? 56 : 0) + (bill.no ? 60 : 0);
+        + ((bill.discAmt > 0 || (bill.roundAdj||0) > 0)
+             ? 32 + (bill.discAmt > 0 ? 24 : 0) + ((bill.roundAdj||0) > 0 ? 24 : 0)
+                  + (discScopeNote(bill) ? 22 : 0)
+             : 0)
+        + (settings.foot ? 56 : 0) + (bill.no ? 60 : 0);
 
   var S2 = S;
   c.width = W*S2; c.height = H*S2;
@@ -722,29 +895,37 @@ function drawBill(bill){
   /* right half: details block, flush right and sitting on the rule */
   var rx = W - pad;
   var bottom = headerTop + headerH;
-  var dateBase = bottom - 6;
-  var nameBase = dateBase - 34 - (nameLines.length - 1)*20;
-  var kindBase = nameBase - 30;
   var labelX = rx - 250;
+  var ry = bottom - rowsH;
 
   x.textAlign = "right";
   x.fillStyle = "#A8322D"; x.font = "700 12px "+SANS;
-  x.fillText(bill.no ? "BILL" : "ESTIMATE", rx, kindBase);
+  x.fillText(bill.no ? "BILL" : "ESTIMATE", rx, ry - 12);
 
+  infoRows.forEach(function(row, n){
+    ry += 15;
+    x.textAlign = "left";
+    x.fillStyle = "#8F8154"; x.font = "600 10px "+SANS;
+    x.fillText(row.label, labelX, ry);
+    x.textAlign = "right";
+    x.fillStyle = "#1C2321"; x.font = VAL_FONT;
+    row.lines.forEach(function(l, k){ x.fillText(l, rx, ry + k*20); });
+    ry += (row.lines.length - 1)*20 + 9;
+    if (n < infoRows.length - 1){
+      x.strokeStyle = "#EADDB8"; x.lineWidth = 1;
+      x.beginPath(); x.moveTo(labelX, ry); x.lineTo(rx, ry); x.stroke();
+      ry += 2;
+    }
+  });
   x.textAlign = "left";
-  x.fillStyle = "#8F8154"; x.font = "600 10px "+SANS;
-  x.fillText("CUSTOMER", labelX, nameBase);
-  x.fillText("DATE", labelX, dateBase);
 
-  x.textAlign = "right";
-  x.fillStyle = "#1C2321"; x.font = VAL_FONT;
-  nameLines.forEach(function(l, n){ x.fillText(l, rx, nameBase + n*20); });
-  x.fillText(fmtDate(bill.date), rx, dateBase);
-
-  var ruleY = nameBase + (nameLines.length - 1)*20 + 12;
-  x.strokeStyle = "#EADDB8"; x.lineWidth = 1;
-  x.beginPath(); x.moveTo(labelX, ruleY); x.lineTo(rx, ruleY); x.stroke();
-  x.textAlign = "left";
+  if (voided){
+    x.strokeStyle = "#A8322D"; x.lineWidth = 1;
+    x.strokeRect(pad, 34, W - pad*2, 30);
+    x.fillStyle = "#A8322D"; x.font = "700 12px "+SANS; x.textAlign = "center";
+    x.fillText("VOIDED" + (bill.voidReason ? " \u2014 " + bill.voidReason.toUpperCase() : ""), W/2, 53);
+    x.textAlign = "left";
+  }
 
   var y = bottom + 16;
   x.strokeStyle = "#1C2321"; x.lineWidth = 2;
@@ -769,13 +950,27 @@ function drawBill(bill){
     x.beginPath(); x.moveTo(pad,y); x.lineTo(W-pad,y); x.stroke();
   });
 
-  if (bill.discAmt > 0){
+  var cAdj = bill.roundAdj || 0;
+  if (bill.discAmt > 0 || cAdj > 0){
     y += 24; x.fillStyle = "#8F8154"; x.font = "14px "+SANS;
     x.fillText("Subtotal", pad, y);
     x.textAlign = "right"; x.fillText(money(bill.sub), W-pad, y); x.textAlign = "left";
-    y += 24; x.fillStyle = "#A8322D";
-    x.fillText("Discount" + (bill.disc.m==="pct" ? " ("+bill.disc.v+"%)" : ""), pad, y);
-    x.textAlign = "right"; x.fillText("−"+money(bill.discAmt), W-pad, y); x.textAlign = "left";
+
+    if (bill.discAmt > 0){
+      y += 24; x.fillStyle = "#A8322D"; x.font = "14px "+SANS;
+      x.fillText("Discount" + (bill.disc.m==="pct" ? " ("+bill.disc.v+"%)" : ""), pad, y);
+      x.textAlign = "right"; x.fillText("−"+money(bill.discAmt), W-pad, y); x.textAlign = "left";
+    }
+    if (cAdj > 0){
+      y += 24; x.fillStyle = "#A8322D"; x.font = "14px "+SANS;
+      x.fillText("Rounded down", pad, y);
+      x.textAlign = "right"; x.fillText("−"+money(cAdj), W-pad, y); x.textAlign = "left";
+    }
+    var dnote = discScopeNote(bill);
+    if (dnote){
+      y += 20; x.fillStyle = "#8F8154"; x.font = "11.5px "+SANS;
+      x.textAlign = "right"; x.fillText(dnote, W-pad, y); x.textAlign = "left";
+    }
   }
 
   y += 26;
@@ -794,17 +989,25 @@ function drawBill(bill){
   }
 
   if (bill.no){
+    var ink = voided ? "#8A8F8C" : "#A8322D";
     x.save();
     x.translate(W - pad - 50, H - 78);
     x.rotate(-7*Math.PI/180);
-    x.strokeStyle = "#A8322D"; x.lineWidth = 3.5;
+    x.strokeStyle = ink; x.lineWidth = 3.5;
     x.strokeRect(-48,-48,96,96);
-    x.fillStyle = "#A8322D"; x.textAlign = "center";
-    x.font = "700 26px "+SERIF;
-    x.fillText(settings.seal || "Qi", 0, -8);
-    x.font = "10.5px "+SANS;
-    x.fillText(fmtDate(bill.date), 0, 15);
-    x.fillText(fmtTime(bill.date), 0, 31);
+    x.fillStyle = ink; x.textAlign = "center";
+    if (voided){
+      x.font = "700 20px "+SERIF;
+      x.fillText("VOID", 0, -4);
+      x.font = "10.5px "+SANS;
+      x.fillText(fmtDate(bill.voidedAt || stampSrc), 0, 20);
+    } else {
+      x.font = "700 26px "+SERIF;
+      x.fillText(settings.seal || "Qi", 0, -8);
+      x.font = "10.5px "+SANS;
+      x.fillText(fmtDate(stampSrc), 0, 15);
+      x.fillText(fmtTime(stampSrc), 0, 31);
+    }
     x.restore();
   }
   return c;
@@ -829,30 +1032,107 @@ $("btnShare").addEventListener("click", function(){
 });
 
 /* ---------- records ---------- */
+var period = { kind:"month", from:"", to:"" };
+
+function periodRange(){
+  var now = new Date();
+  if (period.kind === "today")  return { a: startOfDay(now), b: null, label: "Today" };
+  if (period.kind === "week")   return { a: startOfWeek(now), b: null, label: "This week (from Monday)" };
+  if (period.kind === "month")  return { a: new Date(now.getFullYear(), now.getMonth(), 1), b: null, label: "This month" };
+  if (period.kind === "custom"){
+    var a = period.from ? startOfDay(new Date(period.from + "T00:00")) : null;
+    var b = period.to   ? new Date(new Date(period.to + "T00:00").getTime() + 86400000) : null;
+    var lbl = (a ? fmtDate(a) : "the beginning") + " to " + (b ? period.to && fmtDate(new Date(period.to + "T00:00")) : "today");
+    return { a:a, b:b, label: lbl };
+  }
+  return { a:null, b:null, label:"All time" };
+}
+
+function inPeriod(b, r){
+  var d = new Date(b.date);
+  if (r.a && d < r.a) return false;
+  if (r.b && d >= r.b) return false;
+  return true;
+}
+
 function renderRecords(){
+  var r = periodRange();
+  var shownBills = bills.filter(function(b){ return inPeriod(b, r); });
+  var counted = live(shownBills);
+
   var list = $("recList"); list.innerHTML = "";
-  $("recEmpty").hidden = bills.length > 0;
-  bills.forEach(function(b){
-    var btn = document.createElement("button");
-    btn.className = "rec";
-    btn.innerHTML = "<span class='rno'>"+esc(b.no)+"</span>"
+  $("recEmpty").hidden = shownBills.length > 0;
+  $("recEmpty").textContent = bills.length
+    ? "No bills in this period."
+    : "No bills issued yet.";
+
+  shownBills.forEach(function(b){
+    var row = document.createElement("div");
+    row.className = "rec" + (isVoid(b) ? " void" : "");
+
+    var main = document.createElement("button");
+    main.className = "recmain";
+    main.innerHTML = "<span class='rno'>"+esc(b.no)+"</span>"
       + "<span class='rmid'><b>"+esc(b.name||"No name")+"</b><i>"+fmtDate(b.date)+", "+fmtTime(b.date)
       + " · "+b.items.length+" item"+(b.items.length===1?"":"s")
       + (b.discAmt>0 ? " · −"+money(b.discAmt) : "")
       + (b.mode === "backdated" ? " · backdated" : "")+"</i></span>"
+      + (isVoid(b) ? "<span class='vtag'>VOID</span>" : "")
       + "<span class='ramt'>"+money(b.total)+"</span>";
-    btn.addEventListener("click", function(){ renderSheet(b,false); });
-    list.appendChild(btn);
+    main.addEventListener("click", function(){ renderSheet(b,false); });
+
+    /* a native select gives Android's own picker — one tap, no custom dialog */
+    var sel = document.createElement("select");
+    sel.className = "pay" + (b.pay ? " set" : "");
+    sel.setAttribute("aria-label", "Payment method for bill " + b.no);
+    sel.disabled = isVoid(b);
+    var blank = document.createElement("option");
+    blank.value = ""; blank.textContent = "Payment…";
+    sel.appendChild(blank);
+    PAY_METHODS.forEach(function(m){
+      var o = document.createElement("option");
+      o.value = m; o.textContent = m;
+      sel.appendChild(o);
+    });
+    sel.value = b.pay || "";
+    sel.addEventListener("change", function(){
+      b.pay = sel.value;
+      sel.classList.toggle("set", !!b.pay);
+      save("bills2", bills);
+      toast(b.pay ? "Marked paid by " + b.pay + "." : "Payment method cleared.");
+    });
+
+    row.appendChild(main);
+    row.appendChild(sel);
+    list.appendChild(row);
   });
-  var now = new Date(), m = 0;
-  bills.forEach(function(b){
-    var d = new Date(b.date);
-    if (d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear()) m += b.total;
+
+  $("stSales").textContent = money(counted.reduce(function(t,b){ return t+b.total; },0));
+  $("stCount").textContent = counted.length;
+  $("stVoid").textContent  = shownBills.length - counted.length;
+
+  Array.prototype.forEach.call(document.querySelectorAll(".periods button"), function(btn){
+    btn.classList.toggle("on", btn.dataset.p === period.kind);
   });
-  $("stMonth").textContent = money(m);
-  $("stCount").textContent = bills.length;
-  $("stAll").textContent = money(bills.reduce(function(t,b){ return t+b.total; },0));
+  $("rangeBox").hidden = period.kind !== "custom";
+  $("periodNote").textContent = r.label + " · voided bills are excluded from the sales figure.";
 }
+
+Array.prototype.forEach.call(document.querySelectorAll(".periods button"), function(btn){
+  btn.addEventListener("click", function(){
+    period.kind = btn.dataset.p;
+    if (period.kind === "custom" && !period.from){
+      var now = new Date();
+      period.from = localInputValue(new Date(now.getFullYear(), now.getMonth(), 1)).slice(0,10);
+      period.to   = localInputValue(now).slice(0,10);
+      $("rangeFrom").value = period.from;
+      $("rangeTo").value = period.to;
+    }
+    renderRecords();
+  });
+});
+$("rangeFrom").addEventListener("input", function(e){ period.from = e.target.value; renderRecords(); });
+$("rangeTo").addEventListener("input", function(e){ period.to = e.target.value; renderRecords(); });
 
 function download(name, text, type){
   var blob = new Blob([text], { type:type });
@@ -877,21 +1157,25 @@ function lineSubtotal(b, item){
 
 $("btnCsv").addEventListener("click", function(){
   if (!bills.length){ toast("No bills to export yet."); return; }
-  var rows = [["bill_no","date","time","entry_mode","issued_at","customer","category","item","qty",
-               "unit_price","line_total","line_subtotal","bill_subtotal","discount_applies_to",
-               "bill_discount","bill_total"]];
+  var rows = [["bill_no","status","date","time","entry_mode","issued_at","voided_at","void_reason",
+               "customer","payment_method","category","item","qty","unit_price","line_total",
+               "line_subtotal","bill_subtotal","discount_applies_to","bill_discount",
+               "bill_rounding","bill_total"]];
   bills.slice().reverse().forEach(function(b){
     var d = new Date(b.date);
     var issued = b.issuedAt ? new Date(b.issuedAt) : d;
     b.items.forEach(function(i){
       rows.push([b.no,
+                 isVoid(b) ? "void" : "issued",
                  localInputValue(d).slice(0,10), csvTime(b.date),
                  b.mode || "real-time",
                  localInputValue(issued).replace("T"," "),
-                 b.name, CATS[i.c]||i.c, i.n, i.q, i.p.toFixed(2), (i.p*i.q).toFixed(2),
+                 b.voidedAt ? localInputValue(new Date(b.voidedAt)).replace("T"," ") : "",
+                 b.voidReason || "",
+                 b.name, b.pay || "", CATS[i.c]||i.c, i.n, i.q, i.p.toFixed(2), (i.p*i.q).toFixed(2),
                  lineSubtotal(b, i).toFixed(2),
                  b.sub.toFixed(2), (b.discAmt>0 ? SCOPES[(b.disc&&b.disc.s)||"treat"] : ""),
-                 (b.discAmt||0).toFixed(2), b.total.toFixed(2)]);
+                 (b.discAmt||0).toFixed(2), (b.roundAdj||0).toFixed(2), b.total.toFixed(2)]);
     });
   });
   var csv = "\ufeff" + rows.map(function(r){ return r.map(csvCell).join(","); }).join("\n");
@@ -901,7 +1185,7 @@ $("btnCsv").addEventListener("click", function(){
 
 $("btnBackup").addEventListener("click", function(){
   download("qi-tcm-backup-"+new Date().toISOString().slice(0,10)+".json",
-    JSON.stringify({ v:4, cfg:settings, tx:treatments, bills:bills }, null, 2), "application/json");
+    JSON.stringify({ v:5, app:APP_VERSION, cfg:settings, tx:treatments, bills:bills }, null, 2), "application/json");
   toast("Backup saved.");
 });
 
@@ -1002,6 +1286,8 @@ Array.prototype.forEach.call(document.querySelectorAll("[data-add]"), function(b
 });
 
 /* ---------- go ---------- */
+renderPayButtons();
+$("verNote").textContent = "App version " + APP_VERSION + ". Mention this if something looks wrong.";
 $("storeWarn").hidden = HAS_STORE;
 $("discMode").textContent = draft.disc.m === "pct" ? "%" : "RM";
 setWhenMode("now");
