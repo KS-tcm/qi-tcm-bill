@@ -8,7 +8,7 @@
    version.json is deliberately never cached — it's how the running app finds
    out that a newer build has been published. */
 
-const VERSION = "1.4";
+const VERSION = "1.5";
 const CACHE = "qi-tcm-v" + VERSION;
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 

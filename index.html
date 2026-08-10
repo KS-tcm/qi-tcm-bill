@@ -386,9 +386,11 @@ table.sh td small{display:block;font-family:var(--sans);font-size:11.5px;color:v
         <div class="actions"><button class="btn quiet wide" data-add="consult">Add consultation item</button></div></div>
       <div class="txgroup"><h3>Treatments</h3><div id="txTreat"></div>
         <div class="actions"><button class="btn quiet wide" data-add="treat">Add treatment</button></div></div>
+      <div class="txgroup"><h3>Variable Treatments</h3><div id="txVariable"></div>
+        <div class="actions"><button class="btn quiet wide" data-add="variable">Add variable treatment</button></div></div>
       <div class="txgroup"><h3>Combos</h3><div id="txCombo"></div>
         <div class="actions"><button class="btn quiet wide" data-add="combo">Add combo</button></div></div>
-      <p class="note">Changes save as you type. Herbal Medicine has no fixed price — type the daily rate when billing, and set quantity to the number of days.</p>
+      <p class="note">Changes save as you type. Variable Treatments have no fixed price — the figure here is just the starting suggestion, and she types the real one when billing. Their description line is printed on the bill, so it's the place to note something like "RM15–20 per day". They're billed and discounted exactly like ordinary treatments.</p>
     </div>
 
     <div class="card">
@@ -463,7 +465,7 @@ var draft      = { name:"", items:[], disc:{ m:"pct", v:0, s:"treat" }, whenMode
 var shown      = null;
 
 /* ---------- helpers ---------- */
-var APP_VERSION = "1.4";
+var APP_VERSION = "1.5";
 var $ = function(id){ return document.getElementById(id); };
 var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 var CATS = { consult:"Consultation", treat:"Treatments", combo:"Combos" };
@@ -579,7 +581,8 @@ function renderDraft(){
 
     var nm = document.createElement("div");
     nm.className = "lname";
-    nm.innerHTML = "<b>"+esc(it.n)+"</b><i>"+(it.v ? "per day · "+esc(it.d||"") : money(it.p)+" each")+"</i>";
+    nm.innerHTML = "<b>"+esc(it.n)+"</b><i>"
+      + (it.v ? (it.d ? esc(it.d) : "price set on the day") : money(it.p)+" each")+"</i>";
     li.appendChild(nm);
 
     var s = document.createElement("div");
@@ -754,7 +757,7 @@ function renderSheet(bill, animate){
     if (discScopeNote(bill)) discRow += "<div class='sh-discnote'>"+esc(discScopeNote(bill))+"</div>";
   }
 
-  var infoRows = "<tr><th>Customer</th><td>"+esc(bill.name || "—")+"</td></tr>";
+  var infoRows = "<tr><th>"+(bill.no ? "Bill to" : "Customer")+"</th><td>"+esc(bill.name || "—")+"</td></tr>";
   if (backdated){
     infoRows += "<tr><th>Visit</th><td>"+fmtDate(bill.date)+"<br>"+fmtTime(bill.date)+"</td></tr>"
               + "<tr><th>Bill issued</th><td>"+fmtDate(stampSrc)+"</td></tr>";
@@ -867,7 +870,7 @@ function drawBill(bill){
   var stampSrc = bill.issuedAt || bill.date;
 
   var nameLines = wrap(bill.name || "—", VAL_FONT, 205);
-  var infoRows = [{ label:"CUSTOMER", lines:nameLines }];
+  var infoRows = [{ label: bill.no ? "BILL TO" : "CUSTOMER", lines:nameLines }];
   if (backdated){
     infoRows.push({ label:"VISIT", lines:[fmtDate(bill.date), fmtTime(bill.date)] });
     infoRows.push({ label:"BILL ISSUED", lines:[fmtDate(stampSrc)] });
@@ -1253,11 +1256,20 @@ function fillSettings(){
   renderTxEditor();
 }
 
+/* Variable treatments are ordinary treatments (same category, same discount
+   treatment) that carry a v flag — the flag is what splits them in Setup. */
+var TX_GROUPS = [
+  { box:"txConsult",  match:function(t){ return t.c === "consult"; } },
+  { box:"txTreat",    match:function(t){ return t.c === "treat" && !t.v; } },
+  { box:"txVariable", match:function(t){ return t.c === "treat" && !!t.v; } },
+  { box:"txCombo",    match:function(t){ return t.c === "combo"; } }
+];
+
 function renderTxEditor(){
-  [["consult","txConsult"],["treat","txTreat"],["combo","txCombo"]].forEach(function(pair){
-    var box = $(pair[1]); box.innerHTML = "";
+  TX_GROUPS.forEach(function(g){
+    var box = $(g.box); box.innerHTML = "";
     treatments.forEach(function(t,i){
-      if (t.c !== pair[0]) return;
+      if (!g.match(t)) return;
       var row = document.createElement("div"); row.className = "tx";
 
       var n = document.createElement("input");
@@ -1277,10 +1289,10 @@ function renderTxEditor(){
 
       row.appendChild(n); row.appendChild(p); row.appendChild(del);
 
-      if (pair[0] === "combo" || t.v){
+      if (t.c === "combo" || t.v){
         var d = document.createElement("input");
         d.className = "d"; d.value = t.d || "";
-        d.placeholder = t.v ? "Price note shown to the customer" : "What's included";
+        d.placeholder = t.v ? "Note printed on the bill, e.g. RM15–20 per day" : "What's included";
         d.addEventListener("input", function(){ treatments[i].d = d.value; save("tx2",treatments); renderChips(); });
         row.appendChild(d);
       }
@@ -1291,10 +1303,13 @@ function renderTxEditor(){
 
 Array.prototype.forEach.call(document.querySelectorAll("[data-add]"), function(btn){
   btn.addEventListener("click", function(){
-    treatments.push({ c:btn.dataset.add, n:"", p:0 });
+    var kind = btn.dataset.add;
+    treatments.push(kind === "variable"
+      ? { c:"treat", v:1, n:"", p:0, d:"" }
+      : { c:kind, n:"", p:0 });
     save("tx2", treatments);
     renderTxEditor();
-    var box = $({ consult:"txConsult", treat:"txTreat", combo:"txCombo" }[btn.dataset.add]);
+    var box = $({ consult:"txConsult", treat:"txTreat", variable:"txVariable", combo:"txCombo" }[kind]);
     var ins = box.querySelectorAll("input.n");
     if (ins.length) ins[ins.length-1].focus();
   });
