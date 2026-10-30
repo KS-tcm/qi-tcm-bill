@@ -1,4 +1,4 @@
-/* Qi TCM bill app — offline support.
+/* Qi TCM — offline support.
 
    Bump VERSION on every release. It clears the previous cache and keeps the
    worker in step with the app.
@@ -8,9 +8,31 @@
    version.json is deliberately never cached — it's how the running app finds
    out that a newer build has been published. */
 
-const VERSION = "1.5";
+const VERSION = "2.0";
 const CACHE = "qi-tcm-v" + VERSION;
-const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
+const ASSETS = [
+  "./",
+  "./index.html",
+  "./app.css",
+  "./manifest.webmanifest",
+  "./logo.png",
+  "./icon-192.png",
+  "./icon-512.png",
+  "./js/app.js",
+  "./js/util.js",
+  "./js/state.js",
+  "./js/store.js",
+  "./js/money.js",
+  "./js/backup.js",
+  "./js/sheet.js",
+  "./js/billing.js",
+  "./js/records.js",
+  "./js/patients.js",
+  "./js/linkbills.js",
+  "./js/settings.js",
+  "./js/packages.js",
+  "./js/qr.js"
+];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));

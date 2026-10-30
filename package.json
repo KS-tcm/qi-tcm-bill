@@ -1,0 +1,14 @@
+{
+  "name": "qi-tcm",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Practice management for a solo TCM clinic. Offline-first PWA, no build step.",
+  "scripts": {
+    "test": "node test/boot.test.mjs && node test/ui.test.mjs && node test/ui2.test.mjs && node test/persist.test.mjs && node test/fallback.test.mjs && node test/packages.test.mjs"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "^6.0.0",
+    "jsdom": "^26.0.0"
+  }
+}
