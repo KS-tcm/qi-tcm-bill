@@ -104,6 +104,14 @@ async function start(){
   if (loaded && loaded.legacy){
     toast("Your bills have been moved to the new storage.");
   }
+  if (loaded && loaded.rescued){
+    toast("Recovered " + (loaded.rescued.patients || []).length + " patients saved while the database was unavailable.");
+  }
+  if (loaded && loaded.readFailed){
+    const w = $("storeWarn");
+    w.hidden = false;
+    w.textContent = "This tablet's database could not be read just now, so nothing is shown. Don't enter anything — close the app, reopen it, and if this message comes back, restore from your most recent backup.";
+  }
 
   $("linkTab").hidden = !linkbills.shouldOffer();
   if (linkbills.shouldOffer()) goTab("link");

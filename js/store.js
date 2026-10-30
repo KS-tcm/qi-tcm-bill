@@ -227,25 +227,65 @@ function readAllStores(){
 }
 
 async function loadFromIdb(){
-  let out;
+  let out, readOk = true;
   try { out = await readAllStores(); }
-  catch(e){ out = {}; STORES.forEach((n) => { out[n] = []; }); }
+  catch(e){
+    readOk = false;
+    out = {};
+    STORES.forEach((n) => { out[n] = []; });
+    console.warn("could not read the database", e);
+  }
 
-  const kv = {};
-  (out.kv || []).forEach((row) => { kv[row.k] = row.v; });
+  /* The kv store holds { k, v } rows; everything else is a plain list. The
+     rows are turned into a map here, and the map must be spread AFTER the
+     raw stores or `out.kv` clobbers it and every setting silently reads as
+     undefined. That bug cost a release — keep the order. */
+  const kvMap = {};
+  (out.kv || []).forEach((row) => { if (row && row.k) kvMap[row.k] = row.v; });
 
-  const migrated = kv.meta && kv.meta.migratedFrom;
-  if (!migrated){
+  /* The one-time migration from v1.5 rewrites bills from the old
+     localStorage copy, so it must only ever run when the database is
+     genuinely new. A failed read looks identical to an empty database from
+     here, and treating one as the other would throw away every bill issued
+     since the upgrade. */
+  const migrated = kvMap.meta && kvMap.meta.migratedFrom;
+  const reallyEmpty = readOk
+    && !(out.bills || []).length
+    && !(out.patients || []).length
+    && !Object.keys(kvMap).length;
+
+  if (!migrated && !readOk){
+    return { ...out, fromLegacy:false, kv:kvMap, legacy:null, readFailed:true };
+  }
+
+  if (!migrated && reallyEmpty){
     const old = {
       settings: lsLoad("cfg2", null),
       treatments: lsLoad("tx2", null),
       bills: lsLoad("bills2", null)
     };
     if (old.settings || old.treatments || old.bills){
-      return { fromLegacy:true, kv, ...out, legacy:old };
+      return { ...out, fromLegacy:true, kv:kvMap, legacy:old };
     }
   }
-  return { fromLegacy:false, kv, ...out, legacy:null };
+
+  /* A boot that fell back to localStorage writes patients and bills only
+     there. If the database opens cleanly later, that work is invisible and
+     looks exactly like it was lost. Adopt it — but only when there is
+     nothing in the database to contradict, so nothing is ever resurrected
+     over newer data. */
+  if (readOk && !(out.patients || []).length && !(out.bills || []).length){
+    const stranded = {
+      patients: lsLoad("qi_patients", []),
+      packages: lsLoad("qi_packages", []),
+      redemptions: lsLoad("qi_redemptions", [])
+    };
+    if ((stranded.patients || []).length){
+      return { ...out, fromLegacy:false, kv:kvMap, legacy:null, rescued:stranded };
+    }
+  }
+
+  return { ...out, fromLegacy:false, kv:kvMap, legacy:null };
 }
 
 function loadFromLs(){

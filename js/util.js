@@ -1,6 +1,6 @@
 /* Small shared helpers. No imports — everything else may depend on this. */
 
-export const APP_VERSION = "2.0";
+export const APP_VERSION = "2.0.1";
 export const LOGO_SRC = "./logo.png";
 
 export const LOGO = new Image();

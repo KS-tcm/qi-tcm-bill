@@ -3,7 +3,47 @@
 All notable changes to Qi TCM. The version number shown at the
 bottom of the Setup tab matches the newest entry here.
 
-## v2.0 — not yet released
+## v2.0.1 — 30 October 2026
+
+A data-loss fix. Anyone on v2.0 should update before entering anything else.
+
+### Fixed
+- **Settings, the price list and the migration marker were silently reset to
+  defaults every time the app was reopened.** The kv store returns its rows
+  as `{ k, v }` records, which `loadFromIdb` turned into a map — and then
+  overwrote with the raw array, because the spread of the other stores came
+  after it in the returned object. Every later read of `loaded.kv.settings`
+  was `undefined`, so the defaults won.
+
+  The damage ran in a chain. Losing the marker meant the next thing to write
+  `meta` — the link-old-bills screen's Done button does exactly that — saved
+  it without the marker. On the launch after that the app believed it had
+  never migrated from v1.5, re-ran the one-time import, emptied the patient
+  list and rewrote every bill from the old localStorage copy. Three launches
+  from upgrading to losing the lot.
+
+  Patient records were never actually deleted from the database; they stopped
+  being read. Updating brings them back.
+
+### Changed
+- **The one-time v1.5 import now only runs against a genuinely empty
+  database**, and never when the read failed. A failed read used to be
+  indistinguishable from a fresh install, which was the second way the same
+  import could have destroyed real records.
+- **Work saved while the database was unavailable is no longer stranded.** A
+  session that falls back to simpler storage writes patients there; if the
+  database opens cleanly later, that work is adopted into it rather than
+  being invisible. Only when there is nothing in the database to contradict,
+  so nothing is ever resurrected over newer data.
+- A database that cannot be read now says so plainly and tells her not to
+  enter anything, rather than showing an empty app as if it were new.
+
+### Tests
+- A new suite covers the second and third launch. Every existing suite booted
+  the app exactly once, which is precisely why a bug that only appears on
+  reopening got through. 410 assertions now.
+
+## v2.0 — released 30 October 2026
 
 Everything below ships to the clinic together as v2.0. The dated sections are
 the order it was built in, kept so the reasoning behind each piece is still

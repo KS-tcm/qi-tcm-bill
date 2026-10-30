@@ -155,6 +155,23 @@ export async function boot(){
     /* a marker in localStorage too, so a later fallback boot can tell that
        the real data now lives in IndexedDB and warn instead of serving stale */
     store.markMigratedInLs(S.meta);
+  } else if (loaded.rescued){
+    /* An earlier session wrote to the fallback store because the database
+       would not open. It opens now, so bring that work across rather than
+       leaving it stranded where nothing will ever read it. */
+    S.settings    = Object.assign({}, DEFAULT_SETTINGS, loaded.kv.settings || {});
+    S.treatments  = loaded.kv.treatments || DEFAULT_TX.slice();
+    S.meta        = loaded.kv.meta || {};
+    S.bills       = (loaded.bills || []).map(normaliseBill);
+    S.patients    = loaded.rescued.patients || [];
+    S.packages    = loaded.rescued.packages || [];
+    S.redemptions = loaded.rescued.redemptions || [];
+    sortBills();
+    await Promise.all([
+      store.replaceAll("patients", S.patients),
+      store.replaceAll("packages", S.packages),
+      store.replaceAll("redemptions", S.redemptions)
+    ]);
   } else {
     S.settings    = Object.assign({}, DEFAULT_SETTINGS, loaded.kv.settings || {});
     S.treatments  = loaded.kv.treatments || DEFAULT_TX.slice();
