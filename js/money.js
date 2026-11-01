@@ -30,9 +30,10 @@ export function eligibleForDiscount(item, disc){
   return scope === "tc" ? (item.c === "treat" || item.c === "consult") : (item.c === "treat");
 }
 
-/* The default for a line when it is first added. */
-export function defaultDiscountFlag(cat){
-  return cat === "treat" ? 1 : 0;
+/* Nothing is discounted unless she chooses it. A line that quietly arrives
+   already discounted is a discount given without being decided on. */
+export function defaultDiscountFlag(){
+  return 0;
 }
 
 export function totals(items, disc, credit){
@@ -102,6 +103,38 @@ export function discScopeNote(bill){
   return "Discount applies to " + covered.length + " of " + items.length + " items.";
 }
 
+/* A compact phrasing of the discount for a spreadsheet column: what came
+   off, and what it came off. Empty when there was no discount. */
+export function discountSummary(bill){
+  if (!bill.discAmt) return "";
+  const amount = (bill.disc && bill.disc.m === "pct")
+    ? bill.disc.v + "%"
+    : "RM " + (Math.round(bill.discAmt * 100) / 100).toFixed(2);
+  return amount + " off " + discountTargets(bill);
+}
+
+/* Names what the discount covered, in as few words as stay true. */
+export function discountTargets(bill){
+  const items = (bill.items || []).filter((i) => i.p * i.q > 0);
+  const covered = items.filter((i) => eligibleForDiscount(i, bill.disc));
+  const left = items.filter((i) => !eligibleForDiscount(i, bill.disc));
+  if (!covered.length) return "nothing";
+  if (!left.length) return "everything";
+
+  const cats = {};
+  items.forEach((i) => {
+    cats[i.c] = cats[i.c] || { in:0, out:0 };
+    if (eligibleForDiscount(i, bill.disc)) cats[i.c].in++;
+    else cats[i.c].out++;
+  });
+  if (Object.keys(cats).every((c) => cats[c].in === 0 || cats[c].out === 0)){
+    return joinWords(Object.keys(cats).filter((c) => cats[c].in > 0).map((c) => CAT_WORDS[c]));
+  }
+  const names = covered.map((i) => i.n);
+  if (names.length <= 3) return joinWords(names);
+  return covered.length + " of " + items.length + " items";
+}
+
 function joinWords(list){
   if (list.length <= 1) return list[0] || "";
   if (list.length === 2) return list[0] + " and " + list[1];
@@ -118,6 +151,30 @@ export function lineSubtotal(b, item){
   b.items.forEach((z) => { if (eligibleForDiscount(z, b.disc)) base += z.p * z.q; });
   if (base <= 0) return lineTotal;
   return Math.round((lineTotal - b.discAmt * lineTotal / base) * 100) / 100;
+}
+
+export const CREDIT_LABEL = "Package Credit";
+
+/* How a bill was settled, as a person would say it.
+
+   Credit is derived rather than stored: the bill already records how much
+   came off a package, and writing it into the payment field would put a
+   value in there that the picker has no option for. A bill part-paid in
+   credit names both. */
+export function paymentLabel(bill){
+  const credit = bill.creditApplied || 0;
+  const due = typeof bill.balanceDue === "number" ? bill.balanceDue : bill.total;
+  if (credit <= 0) return bill.pay || "";
+  if (due <= 0) return CREDIT_LABEL;
+  return bill.pay ? CREDIT_LABEL + " + " + bill.pay : CREDIT_LABEL;
+}
+
+/* True when nothing is left for her to collect, so there is no cash method
+   to choose and the picker should not be asking for one. */
+export function settledByCredit(bill){
+  const credit = bill.creditApplied || 0;
+  const due = typeof bill.balanceDue === "number" ? bill.balanceDue : bill.total;
+  return credit > 0 && due <= 0;
 }
 
 export function isVoid(b){ return b.status === "void"; }

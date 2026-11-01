@@ -179,7 +179,7 @@ let detailId = null;
 let form = null;
 let listQuery = "";
 let listFilter = "";      /* "" | "credit" */
-let listSort = "recent";  /* "recent" | "visits" | "no" | "no-desc" */
+let listSort = "recent";  /* recent | visits | visits-asc | no | no-desc */
 let visitMode = "list";   /* "list" | "cal" */
 
 export function showPatients(){
@@ -193,6 +193,9 @@ export function openPatient(id){
 let returnToBill = false;
 export function newPatientForm(prefillName, backToBill){
   form = blankPatient();
+  /* claim the number up front so the screen and the saved record can never
+     disagree about what it is */
+  form.no = nextFreeNumber().no;
   if (prefillName) form.name = prefillName;
   detailId = null;
   returnToBill = !!backToBill;
@@ -228,8 +231,9 @@ function renderList(box){
   const totalVisits = everyone.reduce((t,p) => t + visitCount(p.id), 0);
 
   if (listFilter === "credit") list = list.filter((p) => packages.creditAvailable(p.id) > 0);
-  if (listSort === "visits"){
-    list = list.slice().sort((a,b) => visitCount(b.id) - visitCount(a.id));
+  if (listSort === "visits" || listSort === "visits-asc"){
+    list = list.slice().sort((a,b) => visitCount(a.id) - visitCount(b.id));
+    if (listSort === "visits") list.reverse();
   }
   if (listSort === "no" || listSort === "no-desc"){
     list = list.slice().sort((a,b) => String(a.no).localeCompare(String(b.no)));
@@ -248,13 +252,14 @@ function renderList(box){
         + "<u>Patients</u><b>" + everyone.length + "</b></button>"
       + "<button class='pstat" + (listFilter === "credit" ? " on" : "") + "' id='pfCredit'>"
         + "<u>Unredeemed credit</u><b>" + money(totalCredit) + "</b></button>"
-      + "<button class='pstat" + (listSort === "visits" ? " on" : "") + "' id='pfVisits'>"
+      + "<button class='pstat" + (listSort.indexOf("visits") === 0 ? " on" : "") + "' id='pfVisits'>"
         + "<u>Visits</u><b>" + totalVisits + "</b></button>"
     + "</div>"
     + "<div class='card'>"
       + "<h2>Patients" + (list.length ? " · " + list.length : "")
         + (listFilter === "credit" ? " · holding credit" : "")
         + (listSort === "visits" ? " · most visits first" : "")
+        + (listSort === "visits-asc" ? " · fewest visits first" : "")
         + (listSort === "no" ? " · oldest first" : "")
         + (listSort === "no-desc" ? " · newest first" : "") + "</h2>"
       + "<div id='patList'></div>"
@@ -298,7 +303,9 @@ function renderList(box){
     renderList(box);
   });
   $("pfVisits").addEventListener("click", () => {
-    listSort = listSort === "visits" ? "recent" : "visits";
+    listSort = listSort === "visits" ? "visits-asc"
+             : listSort === "visits-asc" ? "recent"
+             : "visits";
     renderList(box);
   });
   $("pfPatients").addEventListener("click", () => {
@@ -576,6 +583,9 @@ function renderForm(box){
     "<div class='subnav'><button class='back' id='patCancel'>← Cancel</button></div>"
     + "<div class='card'>"
       + "<h2>" + (isNew ? "New patient" : "Edit " + esc(p.name || "patient")) + "</h2>"
+      + "<div class='pnoline'><u>Patient number</u><b>" + esc(p.no || "—") + "</b>"
+        + "<i>" + (isNew ? "Assigned when you save. Change the starting number in Setup."
+                         : "Numbers are never reused.") + "</i></div>"
       + field("fName", "Name <span class='req'>*</span>", p.name)
       + field("fIc", "IC No. <span class='req'>*</span>", p.ic, "e.g. 790214-10-5128")
       + field("fPhone", "Phone No. <span class='req'>*</span>", p.phone, "", "tel")

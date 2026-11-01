@@ -270,12 +270,14 @@ table.sh td small{display:block;font-family:var(--sans);font-size:11.5px;color:v
 
 /* patient picker on the bill tab */
 .picker{position:relative}
-.picked{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--jade);border-radius:8px;background:#F1F6F3;min-height:46px}
-.picked[hidden]{display:none}
-.picked .pmid{flex:1;min-width:0}
-.picked .pmid b{display:block;font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.picked .pmid i{font-style:normal;font-size:12px;color:var(--ink-soft)}
-.picked button{flex:none;width:38px;height:38px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);font-size:17px}
+/* Scoped to the picker: an unscoped `.picked button` once reached into the
+   Records list and squashed a bill row's button to 38px. */
+.picker .picked{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--jade);border-radius:8px;background:#F1F6F3;min-height:46px}
+.picker .picked[hidden]{display:none}
+.picker .picked .pmid{flex:1;min-width:0}
+.picker .picked .pmid b{display:block;font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.picker .picked .pmid i{font-style:normal;font-size:12px;color:var(--ink-soft)}
+.picker .picked button{flex:none;width:38px;height:38px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);font-size:17px}
 .pop{position:absolute;left:0;right:0;top:100%;z-index:30;background:#fff;border:1px solid var(--line);
   border-radius:9px;margin-top:4px;box-shadow:0 10px 26px rgba(0,0,0,.16);max-height:272px;overflow-y:auto}
 .pop[hidden]{display:none}
@@ -445,3 +447,60 @@ table.sh td small{display:block;font-family:var(--sans);font-size:11.5px;color:v
 .cdots i.v{background:transparent;box-shadow:inset 0 0 0 1px var(--ink-soft)}
 .callist{margin-top:12px;border-top:1px solid var(--celadon-deep);padding-top:4px}
 .callist li.lit{background:#FFFBF0;border-radius:7px;padding-left:8px;padding-right:8px}
+
+/* ---------- patient number on the form ---------- */
+.pnoline{background:#F1F6F3;border:1px solid var(--celadon-deep);border-radius:8px;
+  padding:10px 12px;margin-bottom:12px}
+.pnoline u{display:block;text-decoration:none;font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-soft);margin-bottom:2px}
+.pnoline b{font-family:var(--serif);font-size:19px;color:var(--jade)}
+.pnoline i{display:block;font-style:normal;font-size:12px;color:var(--paper-soft);margin-top:3px}
+
+/* ---------- QR beside the bill ---------- */
+.qrinner{max-width:420px}
+.qrinner.split{max-width:960px;display:grid;grid-template-columns:1.05fr .95fr;
+  gap:18px;align-items:start;text-align:left;max-height:88vh}
+.qrinner.split .qrside{text-align:center;align-self:center}
+.qrbill{background:var(--paper);border:1px solid var(--paper-edge);border-radius:10px;
+  padding:16px;max-height:80vh;overflow-y:auto;font-family:var(--serif);color:var(--ink)}
+.qrbill[hidden]{display:none}
+.qrbill .sh-logo{max-width:104px}
+.qrbill .sh-top{min-height:0;padding-bottom:12px;margin-bottom:12px}
+.qrbill .sh-total b{font-size:24px}
+.qrbill .seal{display:none}
+@media(max-width:760px){
+  .qrinner.split{grid-template-columns:1fr;max-height:92vh;overflow-y:auto}
+  .qrbill{max-height:34vh}
+}
+
+/* ---------- selecting and combining bills ---------- */
+.selbar{display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.selbar .btn{flex:1 1 150px;min-height:48px;padding:11px}
+.selbar .btn[disabled]{opacity:.4;pointer-events:none}
+#selNote{margin-top:0;margin-bottom:10px;min-height:19px}
+.rec .recpick{flex:none;width:24px;height:24px;margin:0 2px 0 0}
+
+
+/* Selection is carried entirely by colour: a tick box would have to take
+   width from the name and the date, and this row has none to give. Nothing
+   about the layout changes when selection turns on. */
+.rec{position:relative}
+.rec.selecting{border-style:dashed}
+.rec.selecting .recmain{cursor:pointer}
+.rec.chosen{border-color:var(--jade);border-style:solid;background:#E7EFEA;
+  box-shadow:inset 4px 0 0 var(--jade)}
+.rec.chosen .rmid b{color:var(--jade)}
+
+/* Below this the name, date and amount cannot share a line with a 114px
+   dropdown without the name being truncated to nothing. Give the payment
+   picker its own line rather than crushing everything else. */
+@media(max-width:620px){
+  .rec .pay{flex:1 1 100%;min-width:0;margin-top:2px}
+  .rec .recmain{flex:1 1 100%}
+}
+
+/* A bill with nothing left to collect states how it was settled rather than
+   offering a picker that has no answer. */
+.pay.paid{display:flex;align-items:center;justify-content:center;text-align:center;
+  border-color:#9CC4AE;color:#2F6B4F;background:#EDF6F0;font-weight:600;font-size:12.5px;
+  line-height:1.2;padding:9px 6px}

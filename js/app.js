@@ -7,7 +7,7 @@ import * as store from "./store.js";
 import { initSheet } from "./sheet.js";
 import { initBilling, renderChips, renderDraft, paintPicked } from "./billing.js";
 import { initRecords, renderRecords, resetAmountVisibility } from "./records.js";
-import { initSettings, fillSettings } from "./settings.js";
+import { initSettings, fillSettings, refreshCounters } from "./settings.js";
 import * as patients from "./patients.js";
 import * as linkbills from "./linkbills.js";
 
@@ -21,6 +21,7 @@ export function goTab(name){
   });
   if (name === "records"){ resetAmountVisibility(); renderRecords(); }
   if (name === "patients") patients.render();
+  if (name === "settings") refreshCounters();
   if (name === "link")     linkbills.open();
 }
 

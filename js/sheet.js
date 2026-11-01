@@ -43,7 +43,7 @@ function packageFooter(bill){
   return "<div class='sh-pkg'>" + lines.map((l) => "<div>" + l + "</div>").join("") + "</div>";
 }
 
-export function renderSheet(bill, animate){
+export function billHtml(bill, animate){
   const st = S.settings;
   const backdated = bill.mode === "backdated";
   const voided = isVoid(bill);
@@ -78,10 +78,14 @@ export function renderSheet(bill, animate){
   }
 
   let infoRows = "";
+  if (bill.combined){
+    infoRows += "<tr><th>Bills</th><td>" + esc((bill.sourceNos || []).join(", ")) + "</td></tr>";
+  }
   if (bill.no && st.showBillNo !== false){
     infoRows += "<tr><th>Bill no.</th><td>" + esc(bill.no) + "</td></tr>";
   }
-  infoRows += "<tr><th>" + (bill.no ? "Bill to" : "Customer") + "</th><td>" + esc(bill.name || "—") + "</td></tr>";
+  infoRows += "<tr><th>" + (bill.combined ? "For" : bill.no ? "Bill to" : "Customer")
+            + "</th><td>" + esc(bill.name || "—") + "</td></tr>";
   if (backdated){
     infoRows += "<tr><th>Visit</th><td>" + fmtDate(bill.date) + "<br>" + fmtTime(bill.date) + "</td></tr>"
               + "<tr><th>Bill issued</th><td>" + fmtDate(stampSrc) + "</td></tr>";
@@ -97,15 +101,14 @@ export function renderSheet(bill, animate){
          + "<small>" + fmtDate(stampSrc) + "</small><small>" + fmtTime(stampSrc) + "</small></div>";
   }
 
-  $("sheet").innerHTML =
-    (voided ? "<div class='sh-void'>Voided" + (bill.voidReason ? " — " + esc(bill.voidReason) : "") + "</div>" : "")
+  return (voided ? "<div class='sh-void'>Voided" + (bill.voidReason ? " — " + esc(bill.voidReason) : "") + "</div>" : "")
     + "<div class='sh-top'>"
       + "<div class='sh-brand'>"
         + "<img class='sh-logo' src='" + LOGO_SRC + "' alt='" + esc(st.name) + "'>"
         + (meta ? "<div class='sh-meta'>" + meta + "</div>" : "")
       + "</div>"
       + "<div class='sh-info'>"
-        + "<div class='sh-kind'>" + (bill.no ? "Bill" : "Estimate") + "</div>"
+        + "<div class='sh-kind'>" + (bill.combined ? "Combined" : bill.no ? "Bill" : "Estimate") + "</div>"
         + "<table class='sh-info-t'>" + infoRows + "</table>"
       + "</div>"
     + "</div>"
@@ -113,13 +116,24 @@ export function renderSheet(bill, animate){
     + "<tbody>" + rows + "</tbody></table>"
     + discRow
     + "<div class='sh-total'><span>"
-      + (credit > 0 ? "Balance due" : (bill.no ? "Total" : "Estimated total"))
+      + (bill.combined ? "Total to pay"
+         : credit > 0 ? "Balance due"
+         : bill.no ? "Total" : "Estimated total")
       + "</span><b>" + money(billDue(bill)) + "</b></div>"
-    + packageFooter(bill)
+    + (bill.combined
+        ? "<div class='sh-pkg'><div>Combined from " + (bill.sourceNos || []).length
+          + " bills for one payment. Each is recorded separately.</div></div>"
+        : packageFooter(bill))
     + (st.foot ? "<div class='sh-foot'>" + esc(st.foot) + "</div>" : "")
     + seal;
+}
+
+export function renderSheet(bill, animate){
+  const voided = isVoid(bill);
+  $("sheet").innerHTML = billHtml(bill, animate);
 
   const canVoid = !!bill.no && !voided && S.bills.indexOf(bill) !== -1;
+  const combined = !!bill.combined;
   $("btnVoid").hidden = !canVoid;
 
   /* One tap from the bill to the QR, which is the moment she needs it: the
@@ -127,21 +141,36 @@ export function renderSheet(bill, animate){
      while billing the button goes straight to that QR; if not, it opens the
      one that is set up and offers the other. */
   const qrBtn = $("btnSheetQr");
+  const qrBtn2 = $("btnSheetQr2");
   const payKey = qrKeyFor(bill.pay);
-  const showQrBtn = !voided && (payKey || anyQrConfigured());
-  qrBtn.hidden = !showQrBtn;
-  if (showQrBtn){
+  let showQrBtn = !voided && (payKey || anyQrConfigured());
+  qrBtn2.hidden = true;
+
+  if (combined){
+    /* The whole point of this view is taking one payment, so both ways are
+       always offered rather than hidden behind a switcher. If an image has
+       not been uploaded the overlay says so, which is clearer than a button
+       that silently is not there. */
+    showQrBtn = true;
+    qrBtn.textContent = qrButtonLabel(QR_METHODS[0].pay);
+    qrBtn.dataset.method = QR_METHODS[0].pay;
+    qrBtn2.hidden = false;
+    qrBtn2.textContent = qrButtonLabel(QR_METHODS[1].pay);
+    qrBtn2.dataset.method = QR_METHODS[1].pay;
+  } else if (showQrBtn){
     qrBtn.textContent = payKey ? qrButtonLabel(bill.pay) : "Show QR";
     qrBtn.dataset.method = payKey ? bill.pay : firstConfigured();
   }
+  qrBtn.hidden = !showQrBtn;
 
   /* An estimate can be turned into a bill without going back, which is the
      order things actually happen in: show the price, they agree, they pay,
      it is billed. */
-  const isEstimate = !bill.no;
+  const isEstimate = !bill.no && !combined;
   $("btnSheetIssue").hidden = !isEstimate;
 
-  const shown_ = 2 + (canVoid ? 1 : 0) + (showQrBtn ? 1 : 0) + (isEstimate ? 1 : 0);
+  const shown_ = 2 + (canVoid ? 1 : 0) + (showQrBtn ? 1 : 0)
+               + (qrBtn2.hidden ? 0 : 1) + (isEstimate ? 1 : 0);
   const bar = $("sheetBar");
   bar.classList.toggle("three", shown_ === 3);
   bar.classList.toggle("four", shown_ >= 4);
@@ -394,9 +423,8 @@ export function drawBill(bill){
   return c;
 }
 
-/* "DuitNow QR" already ends in QR; "TnG" does not. */
 function qrButtonLabel(pay){
-  return /qr$/i.test(pay) ? pay : pay + " QR";
+  return pay + " QR";
 }
 
 function firstConfigured(){
@@ -406,7 +434,11 @@ function firstConfigured(){
 
 export function initSheet(){
   initQr();
-  $("btnSheetQr").addEventListener("click", () => openQr($("btnSheetQr").dataset.method));
+  [$("btnSheetQr"), $("btnSheetQr2")].forEach((b) => {
+    b.addEventListener("click", () => {
+      openQr(b.dataset.method, S.shown ? billHtml(S.shown, false) : "");
+    });
+  });
   /* billing.js owns issuing; going through the bus keeps sheet.js from
      importing it, which would close a cycle since billing imports this. */
   $("btnSheetIssue").addEventListener("click", () => emit("issue-from-estimate"));

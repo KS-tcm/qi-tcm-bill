@@ -9,7 +9,7 @@ import { S } from "./state.js";
 
 export const QR_METHODS = [
   { pay:"TnG",         key:"tng",     label:"TnG" },
-  { pay:"DuitNow QR",  key:"duitnow", label:"DuitNow QR" }
+  { pay:"DuitNow",     key:"duitnow", label:"DuitNow" }
 ];
 
 export function qrKeyFor(method){
@@ -38,9 +38,14 @@ export function anyQrConfigured(){
 }
 
 let current = "";
+let sideBill = "";
 
-export function openQr(method){
+/* `bill` is pre-rendered HTML rather than a bill object: sheet.js already
+   knows how to draw one, and taking the string keeps this module from
+   importing it — sheet.js imports this one. */
+export function openQr(method, bill){
   current = method || QR_METHODS[0].pay;
+  sideBill = bill || "";
   paint();
   $("qrWrap").hidden = false;
   document.body.classList.add("locked");
@@ -53,6 +58,14 @@ export function closeQr(){
 
 function paint(){
   const src = qrSrc(current);
+
+  /* The customer is looking at a QR and needs to know what to key in, so the
+     bill sits beside it rather than being dismissed to get here. */
+  const side = $("qrBill");
+  side.innerHTML = sideBill;
+  side.hidden = !sideBill;
+  $("qrInner").classList.toggle("split", !!sideBill);
+
   $("qrTitle").textContent = current;
   $("qrMiss").hidden = true;
   $("qrImg").hidden = false;

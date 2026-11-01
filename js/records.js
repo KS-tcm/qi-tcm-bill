@@ -3,7 +3,8 @@
 import { $, all, esc, money, fmtDate, fmtTime, csvTime, localInputValue, download,
          csvCell, toast, emit, on, startOfDay, startOfWeek, CATS, PAY_METHODS } from "./util.js";
 import { S, saveBill, saveSettings, buildDump, applyDump } from "./state.js";
-import { isVoid, live, lineSubtotal, cashTaken, creditUsed, eligibleForDiscount } from "./money.js";
+import { isVoid, live, lineSubtotal, cashTaken, creditUsed, eligibleForDiscount,
+         discountSummary, paymentLabel, settledByCredit, CREDIT_LABEL } from "./money.js";
 import * as packages from "./packages.js";
 import { renderSheet } from "./sheet.js";
 import { findPatient, renderPackageRows, billTag } from "./patients.js";
@@ -16,6 +17,12 @@ const period = { kind:"month", from:"", to:"" };
    nobody else's business. Deliberately not remembered — the safe state is
    the one you get without thinking about it. */
 let hideAmounts = true;
+
+/* Combining is a way of SHOWING several bills as one so a family can settle
+   in a single payment. It creates nothing: each bill stays its own record,
+   keeps its own number, and is what Sales counts. */
+let selectMode = false;
+const selected = new Set();
 const MASK = "[RM ****]";
 function show(v){ return hideAmounts ? MASK : money(v); }
 
@@ -53,11 +60,19 @@ export function renderRecords(){
 
   shownBills.forEach((b) => {
     const row = document.createElement("div");
-    row.className = "rec" + (isVoid(b) ? " void" : "");
+    row.className = "rec" + (isVoid(b) ? " void" : "")
+      + (selectMode && !isVoid(b) ? " selecting" : "")
+      + (selectMode && selected.has(b.id) ? " chosen" : "");
+
 
     const p = findPatient(b.patientId);
     const main = document.createElement("button");
     main.className = "recmain";
+    if (selectMode && !isVoid(b)){
+      main.setAttribute("aria-pressed", String(selected.has(b.id)));
+      main.setAttribute("aria-label",
+        (selected.has(b.id) ? "Remove " : "Add ") + "bill " + b.no + " to the combined total");
+    }
     main.innerHTML = "<span class='rno'>" + esc(b.no) + "</span>"
       + "<span class='rmid'><b>" + esc(b.name || "No name") + (p ? " · " + esc(p.no) : "") + "</b>"
       + "<i>" + fmtDate(b.date) + ", " + fmtTime(b.date)
@@ -67,7 +82,34 @@ export function renderRecords(){
       + (isVoid(b) ? "<span class='vtag'>VOID</span>" : "")
       + billTag(b)
       + "<span class='ramt'>" + show(typeof b.balanceDue === "number" ? b.balanceDue : b.total) + "</span>";
-    main.addEventListener("click", () => renderSheet(b, false));
+    main.addEventListener("click", () => {
+      /* while selecting, the row is a target to tick rather than a bill to
+         open — tapping the name is the obvious gesture and it should work */
+      /* In select mode the row itself is the target. A tick box has to take
+         width from the name and the date, which is the one thing this row
+         cannot spare on a narrow screen; colour costs nothing at any size. */
+      if (selectMode && !isVoid(b)){
+        const now = !selected.has(b.id);
+        if (now) selected.add(b.id); else selected.delete(b.id);
+        row.classList.toggle("chosen", now);
+        main.setAttribute("aria-pressed", String(now));
+        paintCombineBar(shownBills);
+        return;
+      }
+      renderSheet(b, false);
+    });
+
+    /* Nothing left to collect means nothing to choose: the row states how it
+       was settled instead of offering a picker that cannot be answered. */
+    if (settledByCredit(b) && !isVoid(b)){
+      const tag = document.createElement("span");
+      tag.className = "pay set paid";
+      tag.textContent = CREDIT_LABEL;
+      row.appendChild(main);
+      row.appendChild(tag);
+      list.appendChild(row);
+      return;
+    }
 
     /* a native select gives Android's own picker — one tap, no custom dialog */
     const sel = document.createElement("select");
@@ -87,10 +129,13 @@ export function renderRecords(){
       b.pay = sel.value;
       sel.classList.toggle("set", !!b.pay);
       saveBill(b);
-      toast(b.pay ? "Marked paid by " + b.pay + "." : "Payment method cleared.");
+      toast(b.pay ? "Marked paid by " + paymentLabel(b) + "." : "Payment method cleared.");
     });
 
     row.appendChild(main);
+    /* The dropdown stays: with no tick box there is no space to reclaim, and
+       a row that keeps every field it normally has is a row that cannot look
+       squeezed when selection turns on. Clicks on it never reach the row. */
     row.appendChild(sel);
     list.appendChild(row);
   });
@@ -106,6 +151,7 @@ export function renderRecords(){
   renderUnredeemed();
 
   paintEye();
+  paintCombineBar(shownBills);
   all(".periods button").forEach((btn) => btn.classList.toggle("on", btn.dataset.p === period.kind));
   $("rangeBox").hidden = period.kind !== "custom";
   $("periodNote").textContent = r.label + " · voided bills are excluded from the sales figure.";
@@ -155,6 +201,96 @@ function renderUnredeemed(){
   }
 }
 
+/* ---------- combining bills for one payment ---------- */
+function paintCombineBar(shownBills){
+  const btn = $("btnSelect");
+  const clr = $("btnClearSel");
+  const note = $("selNote");
+  if (!btn) return;
+
+  const live_ = shownBills.filter((b) => !isVoid(b));
+  btn.disabled = !live_.length;
+
+  const n = selected.size;
+  if (!selectMode || n === 0){
+    /* With nothing ticked there is nothing to combine, so the button keeps
+       its original job — pressing it again simply puts the boxes away. */
+    btn.textContent = "Select bills";
+    btn.classList.remove("solid");
+    note.textContent = selectMode
+      ? "Tap the bills this group is paying for together. Press Select bills again to go back."
+      : "";
+  } else if (n >= 2){
+    btn.textContent = "Combine " + n + " bills";
+    btn.classList.add("solid");
+    note.textContent = "Each stays its own record. The combined view is only for taking one payment.";
+  } else {
+    btn.textContent = "Combine";
+    btn.classList.remove("solid");
+    note.textContent = "Tap at least one more bill to combine.";
+  }
+
+  /* Clear is quiet until there is something to clear */
+  clr.disabled = !(selectMode && n > 0);
+}
+
+function exitSelect(){
+  selectMode = false;
+  selected.clear();
+  renderRecords();
+}
+
+/* Identical lines merge, so a family buying three of the same treatment
+   reads as one row of three rather than three rows of one. */
+function combinedBill(bills){
+  const items = [];
+  bills.forEach((b) => {
+    b.items.forEach((i) => {
+      const hit = items.filter((x) => x.n === i.n && x.p === i.p && x.c === i.c)[0];
+      if (hit) hit.q += i.q;
+      else items.push({ n:i.n, p:i.p, q:i.q, c:i.c, d:i.d || "", di:0 });
+    });
+  });
+
+  const sub = items.reduce((t,i) => t + i.p * i.q, 0);
+  const due = Math.round(bills.reduce((t,b) =>
+    t + (typeof b.balanceDue === "number" ? b.balanceDue : b.total), 0) * 100) / 100;
+  const credit = Math.round(bills.reduce((t,b) => t + (b.creditApplied || 0), 0) * 100) / 100;
+  const discAmt = Math.round(bills.reduce((t,b) => t + (b.discAmt || 0), 0) * 100) / 100;
+  const roundAdj = Math.round(bills.reduce((t,b) => t + (b.roundAdj || 0), 0) * 100) / 100;
+  const names = bills.map((b) => b.name || "No name");
+
+  return {
+    combined: true,
+    no: null,
+    kindLabel: "Combined",
+    date: bills[0].date,
+    issuedAt: new Date().toISOString(),
+    mode: "real-time",
+    name: names.join(", "),
+    sourceNos: bills.map((b) => b.no),
+    patientId: null,
+    items: items,
+    disc: { m:"amt", v:discAmt, s:"treat" },
+    pay: "",
+    discAmt: discAmt,
+    sub: sub,
+    net: Math.round((sub - discAmt) * 100) / 100,
+    roundAdj: roundAdj,
+    total: Math.round((due + credit) * 100) / 100,
+    creditApplied: credit,
+    balanceDue: due,
+    creditOwnerId: null
+  };
+}
+
+function doCombine(){
+  const bills = S.bills.filter((b) => selected.has(b.id) && !isVoid(b));
+  if (bills.length < 2){ toast("Pick at least two bills."); return; }
+  bills.sort((a,b) => String(a.date).localeCompare(String(b.date)));
+  renderSheet(combinedBill(bills), false);
+}
+
 function paintBackupNote(){
   const n = $("backupNote");
   if (!n) return;
@@ -190,7 +326,7 @@ function exportCsv(){
                  localInputValue(issued).replace("T"," "),
                  b.voidedAt ? localInputValue(new Date(b.voidedAt)).replace("T"," ") : "",
                  b.voidReason || "",
-                 b.name, p ? p.no : "", last4, b.pay || "",
+                 b.name, p ? p.no : "", last4, paymentLabel(b),
                  CATS[i.c] || i.c, i.n, i.q, i.p.toFixed(2), (i.p * i.q).toFixed(2),
                  eligibleForDiscount(i, b.disc) ? "yes" : "no",
                  lineSubtotal(b, i).toFixed(2),
@@ -203,6 +339,39 @@ function exportCsv(){
   const csv = "﻿" + rows.map((r) => r.map(csvCell).join(",")).join("\n");
   download("qi-tcm-bills-" + new Date().toISOString().slice(0,10) + ".csv", csv, "text/csv;charset=utf-8");
   toast("CSV downloaded.");
+}
+
+/* One row per bill, for reading rather than reconciling: what was sold, to
+   whom, what came off and what it came to. Voided bills are left out —
+   they are not sales and would only need filtering back out again. */
+function exportSummaryCsv(){
+  const issued = S.bills.filter((b) => !isVoid(b));
+  if (!issued.length){ toast("No issued bills to export yet."); return; }
+
+  const rows = [["bill_no","date","customer","patient_no","item",
+                 "discount","bill_total","payment_method"]];
+
+  issued.slice().reverse().forEach((b) => {
+    const p = findPatient(b.patientId);
+    const items = b.items
+      .map((i) => i.n + (i.q > 1 ? " \u00d7" + i.q : ""))
+      .join(", ");
+    rows.push([
+      b.no,
+      localInputValue(new Date(b.date)).slice(0,10),
+      b.name,
+      p ? p.no : "",
+      items,
+      discountSummary(b),
+      b.total.toFixed(2),
+      paymentLabel(b)
+    ]);
+  });
+
+  const csv = "\ufeff" + rows.map((r) => r.map(csvCell).join(",")).join("\n");
+  download("qi-tcm-bill-summary-" + new Date().toISOString().slice(0,10) + ".csv",
+           csv, "text/csv;charset=utf-8");
+  toast(issued.length + " bills exported, one per row.");
 }
 
 async function doBackup(){
@@ -260,6 +429,8 @@ const EYE_OFF = "<svg viewBox='0 0 24 24' aria-hidden='true'><path d='M1.5 12S5 
 /* Re-hides on every entry to the tab, not just the first. */
 export function resetAmountVisibility(){
   hideAmounts = true;
+  selectMode = false;
+  selected.clear();
 }
 
 export function initRecords(){
@@ -284,7 +455,16 @@ export function initRecords(){
   $("rangeFrom").addEventListener("input", (e) => { period.from = e.target.value; renderRecords(); });
   $("rangeTo").addEventListener("input", (e) => { period.to = e.target.value; renderRecords(); });
 
+  $("btnSelect").addEventListener("click", () => {
+    if (!selectMode){ selectMode = true; renderRecords(); return; }
+    if (selected.size === 0){ exitSelect(); return; }
+    if (selected.size >= 2) doCombine();
+    else toast("Tick at least one more bill to combine.");
+  });
+  $("btnClearSel").addEventListener("click", exitSelect);
+
   $("btnCsv").addEventListener("click", exportCsv);
+  $("btnCsvSummary").addEventListener("click", exportSummaryCsv);
   $("btnBackup").addEventListener("click", doBackup);
   $("btnRestore").addEventListener("click", () => $("fileIn").click());
   $("fileIn").addEventListener("change", onRestoreFile);

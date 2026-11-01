@@ -82,6 +82,15 @@ export function renderTxEditor(){
   });
 }
 
+/* The counters move whenever a patient or a bill is created, so the Setup
+   fields have to be refreshed rather than only filled once at launch —
+   otherwise Setup shows the number from whenever the app was opened. */
+export function refreshCounters(){
+  const bill = $("sNext"), pat = $("sPatNext");
+  if (bill && document.activeElement !== bill) bill.value = S.settings.next;
+  if (pat && document.activeElement !== pat) pat.value = S.settings.patNext || 1;
+}
+
 export function fillSettings(){
   Object.keys(SFIELDS).forEach((id) => { $(id).value = S.settings[SFIELDS[id]] || ""; });
   $("sNext").value = S.settings.next;
@@ -255,3 +264,5 @@ async function showSnapshots(){
 }
 
 on("restored", fillSettings);
+on("patients-changed", refreshCounters);
+on("bills-changed", refreshCounters);

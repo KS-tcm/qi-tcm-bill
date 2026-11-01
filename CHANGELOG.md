@@ -3,6 +3,113 @@
 All notable changes to Qi TCM. The version number shown at the
 bottom of the Setup tab matches the newest entry here.
 
+## Unreleased — in-house, still v2.1
+
+### Fixed
+- **A bill paid from package credit showed no payment method at all.** The
+  row was tagged Credit but the picker sat empty, as though she had
+  forgotten to answer it. A fully-settled bill now states **Package Credit**
+  in place of the picker, because there is nothing left to collect and so
+  nothing to choose. A part-paid bill reads "Package Credit + Cash" and
+  keeps its picker for the rest.
+  - The label is derived from what the bill already records, not written
+    into the payment field — putting it there would store a value the picker
+    has no option for.
+- **"Show DuitNow QR QR".** The method was named "DuitNow QR" and the app
+  appends "QR" to it. It is now just **DuitNow** everywhere; the QR is the
+  thing you show, not part of the name. Bills already written on the tablet
+  carry the old wording and are brought forward on load, so they keep
+  matching an option in the picker instead of going blank.
+
+### Changed
+- `payment_method` in both CSV exports now says how the bill was actually
+  settled, Package Credit included. `bill_total` is unchanged: it is what
+  the bill came to, which is what the customer paid for that visit however
+  it was settled.
+
+### Fixed
+- **A selected bill row was being crushed.** `.picked` was already the
+  patient picker's class, and its `.picked button { width:38px }` rule
+  reached into the Records list and squashed the selected row's button from
+  992px to 38px, overlapping everything in it. The row class is now
+  `chosen`, and every picker rule is scoped to `.picker` so it cannot leak
+  again. A test now compares a selected row against an unselected one —
+  the earlier checks only compared normal against selecting and never
+  measured a selected row, which is why this got through twice.
+
+### Changed
+- **Tick boxes are gone; a selected bill is shown in colour** — jade tint
+  with an edge bar, which costs no width at any screen size. In selection
+  mode the row itself is the target. Measured identical in height and in
+  field widths between normal and selection at every width from 500px to
+  1440px.
+- The payment dropdown stays visible during selection, since there is no
+  longer a box competing for the space. Clicks on it never reach the row.
+
+### Added
+- **Summary CSV** in Records: one row per issued bill — bill number, date,
+  customer, patient number, all items in a single cell, what the discount
+  came off, total and payment method. Voided bills are left out. The
+  existing Download CSV, with a row per line item, is unchanged.
+
+## v2.1 — 1 November 2026
+
+### Fixed
+- **Ticking bills no longer squeezes the row.** The tick box is positioned
+  out of the flow so turning selection on cannot reflow anything, and the
+  payment dropdown steps aside while picking — choosing bills to combine and
+  setting a payment method are different jobs, and the dropdown was taking
+  114px the name and date needed. The name column comes out wider during
+  selection than before it.
+- **The bill row was already cramped on a narrow screen**, before any of
+  this: below 620px the payment picker now takes its own line instead of
+  truncating the patient's name to nothing.
+
+### Changed
+- **Nothing is discounted by default.** Treatments used to arrive already
+  inside the discount, which is a discount given without being decided on.
+  Every line now starts outside it and she taps the ones she means. The four
+  presets are unchanged.
+- **Select bills stays Select bills until something is ticked**, and pressing
+  it again puts the boxes away. It only becomes Combine once there is
+  something to combine.
+- **The combined view always ends in four buttons** — TnG QR, DuitNow QR,
+  Close, Send — rather than hiding a payment method behind a switcher. Both
+  are offered even if only one image has been uploaded; the overlay says
+  plainly when a picture is missing, which beats a button that is absent for
+  reasons she cannot see.
+
+### Added
+- **The bill sits beside the QR.** Opening a payment QR now splits the
+  screen — bill on the left, QR on the right — so the customer can see what
+  they owe while they scan instead of having to remember it.
+- **Combine bills.** Select bills puts a tick box on every live bill; once
+  two or more are picked the button becomes Combine and shows them as a
+  single total, with both payment QRs one tap away. For a family paying
+  together.
+  - Combining is only a **view**. Nothing is created, nothing is changed:
+    each bill keeps its own number, stays its own record, and Sales is
+    untouched. The combined sheet says so on its face.
+  - Identical lines merge, so three of the same treatment read as one row of
+    three. Voided bills cannot be picked. Clear is muted until something is
+    selected, and leaving the tab puts the selection away.
+- **The new-patient form shows the number the patient will get**, and holds
+  it, so the screen and the saved record can never disagree.
+
+### Fixed
+- **Setup showed a stale next-patient number.** The field was filled once at
+  launch and never again, so it still read whatever it was when the app was
+  opened. Both counters now follow what has actually been issued, and a
+  field being typed into is left alone.
+
+### Changed
+- **Consultation items always read first** on the draft and on the bill,
+  whatever order they were tapped in. Treatments, combos and packages follow.
+- **Visits sorts both ways** — most first, then fewest, then off — matching
+  how the Patients control already behaved.
+- Ticking a bill updates that row and the buttons rather than redrawing the
+  whole list, which was replacing the box under her finger.
+
 ## v2.0.1 — 30 October 2026
 
 A data-loss fix. Anyone on v2.0 should update before entering anything else.

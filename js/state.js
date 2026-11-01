@@ -123,6 +123,11 @@ export function applyDump(d){
 export function normaliseBill(b){
   if (!b.id) b.id = uid();
   if (!("patientId" in b)) b.patientId = null;
+  /* The method was called "DuitNow QR" up to v2.1, which read as "DuitNow QR
+     QR" once the app started appending the word. Bills already on the tablet
+     carry the old wording and would otherwise match no option in the
+     payment picker, showing as blank. */
+  if (b.pay === "DuitNow QR") b.pay = "DuitNow";
   return b;
 }
 

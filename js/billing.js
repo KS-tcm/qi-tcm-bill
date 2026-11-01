@@ -9,7 +9,7 @@
 import { $, all, esc, money, fmtDate, fmtTime, localInputValue, uid, toast, emit, on } from "./util.js";
 import { S, newDraft, saveBill, saveSettings, sortBills } from "./state.js";
 import { totals, eligibleForDiscount, defaultDiscountFlag } from "./money.js";
-import { renderSheet } from "./sheet.js";
+import { renderSheet, billHtml } from "./sheet.js";
 import { searchPatients, findPatient, maskIC, newPatientForm, activePatients } from "./patients.js";
 import * as packages from "./packages.js";
 import { openQr, qrKeyFor } from "./qr.js";
@@ -51,6 +51,14 @@ export function renderChips(){
   if (pkgWrap) pkgWrap.hidden = !S.treatments.some((t) => t.c === "package");
 }
 
+/* Consultation reads first on a bill, then treatments, combos and any
+   package. Sorting the draft itself rather than only the printed copy keeps
+   the on-screen list and the bill in the same order. */
+const CAT_ORDER = { consult:0, treat:1, combo:2, package:3 };
+function sortDraft(){
+  S.draft.items.sort((a,b) => (CAT_ORDER[a.c] ?? 9) - (CAT_ORDER[b.c] ?? 9));
+}
+
 function addItem(i){
   const t = S.treatments[i];
   const found = S.draft.items.filter((it) => it.n === t.n)[0];
@@ -64,6 +72,7 @@ function addItem(i){
     if (t.c === "package"){ line.cr = Number(t.cr) || 0; line.mo = Number(t.mo) || 12; }
     S.draft.items.push(line);
   }
+  sortDraft();
   renderDraft(); renderChips();
 }
 
@@ -516,7 +525,7 @@ export function initBilling(){
       paintPayButtons();
     });
   });
-  $("btnQr").addEventListener("click", () => openQr(S.draft.pay));
+  $("btnQr").addEventListener("click", () => openQr(S.draft.pay, billHtml(draftToBill(false), false)));
 
   $("btnClear").addEventListener("click", () => {
     if (S.draft.items.length && !confirm("Clear this visit?")) return;

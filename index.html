@@ -96,7 +96,7 @@
             <div class="pays" role="group" aria-label="Payment method">
               <button data-pay="Cash">Cash</button>
               <button data-pay="TnG">TnG</button>
-              <button data-pay="DuitNow QR">DuitNow QR</button>
+              <button data-pay="DuitNow">DuitNow</button>
             </div>
             <button class="btn qrbtn" id="btnQr" hidden>Show QR</button>
           </div>
@@ -152,6 +152,11 @@
     </div>
     <div class="card">
       <h2>Issued bills</h2>
+      <div class="selbar">
+        <button class="btn" id="btnSelect">Select bills</button>
+        <button class="btn quiet" id="btnClearSel" disabled>Clear</button>
+      </div>
+      <p class="note" id="selNote"></p>
       <div id="recList"></div>
       <div class="empty" id="recEmpty">No bills issued yet.</div>
     </div>
@@ -159,9 +164,11 @@
       <h2>Export &amp; backup</h2>
       <div class="actions">
         <button class="btn" id="btnCsv">Download CSV</button>
-        <button class="btn solid" id="btnBackup">Save backup</button>
+        <button class="btn" id="btnCsvSummary">Summary CSV</button>
+        <button class="btn solid wide" id="btnBackup">Save backup</button>
         <button class="btn quiet wide" id="btnRestore">Restore from backup</button>
       </div>
+      <p class="note">Download CSV lists every line of every bill. Summary CSV is one row per issued bill — items, discount and total — for reading at a glance. Voided bills are left out of the summary.</p>
       <p class="note" id="backupNote"></p>
       <p class="note">Save a backup regularly — the share sheet will offer Drive. Whether the bill number is printed on the bill itself is a setting in Setup.</p>
       <input type="file" id="fileIn" accept="application/json,.json" hidden>
@@ -212,8 +219,8 @@
           <input type="file" id="qrFile-tng" accept="image/*" hidden>
         </div>
         <div class="qrcard">
-          <h3>DuitNow QR</h3>
-          <img class="qrprev" id="qrPrev-duitnow" alt="DuitNow QR" hidden>
+          <h3>DuitNow</h3>
+          <img class="qrprev" id="qrPrev-duitnow" alt="DuitNow QR code" hidden>
           <p class="note" id="qrNote-duitnow"></p>
           <div class="actions">
             <button class="btn" id="qrPick-duitnow">Upload</button>
@@ -222,7 +229,7 @@
           <input type="file" id="qrFile-duitnow" accept="image/*" hidden>
         </div>
       </div>
-      <p class="note">Pick TnG or DuitNow QR while billing and a Show QR button appears, big enough for the customer to scan from across the table.</p>
+      <p class="note">Pick TnG or DuitNow while billing and a Show QR button appears, big enough for the customer to scan from across the table.</p>
     </div>
 
     <div class="card">
@@ -267,6 +274,7 @@
   <div class="sheetbar" id="sheetBar">
     <button class="btn danger" id="btnVoid" hidden>Void bill</button>
     <button class="btn qrpay" id="btnSheetQr" hidden>Show QR</button>
+    <button class="btn qrpay" id="btnSheetQr2" hidden>Show QR</button>
     <button class="btn solid" id="btnSheetIssue" hidden>Issue bill</button>
     <button class="btn" id="btnClose">Close</button>
     <button class="btn solid" id="btnShare">Send</button>
@@ -274,12 +282,15 @@
 </div>
 
 <div class="qrwrap" id="qrWrap" hidden>
-  <div class="qrinner">
+  <div class="qrinner" id="qrInner">
+    <div class="qrbill" id="qrBill" hidden></div>
+    <div class="qrside">
     <h2 id="qrTitle">Scan to pay</h2>
     <img id="qrImg" alt="Payment QR code">
     <p id="qrMiss" hidden>No QR saved yet. Upload one in Setup.</p>
     <div class="qrswitch" id="qrSwitch" hidden></div>
     <button class="btn solid" id="qrClose">Done</button>
+    </div>
   </div>
 </div>
 
