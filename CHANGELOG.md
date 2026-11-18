@@ -3,7 +3,28 @@
 All notable changes to Qi TCM. The version number shown at the
 bottom of the Setup tab matches the newest entry here.
 
-## Unreleased — in-house, still v2.1
+## v2.2 — 19 November 2026
+
+### Changed
+- **Both QR buttons, on every estimate and bill.** The bottom bar now always
+  carries **TnG QR** and **DuitNow QR**, whichever payment method was picked —
+  Cash, none, or the other one. Customers often say how they will pay only at
+  the moment of paying, or change their mind halfway, and going back to
+  change the method just to make the right QR appear was a hassle with
+  someone waiting.
+  - The order is fixed (TnG, then DuitNow) so each button is always in the
+    same place.
+  - Not shown on a voided bill, or on one that package credit has fully
+    covered, since there is nothing to pay.
+  - With five buttons on the bar (Void or Issue bill, both QRs, Close, Send)
+    they sit in one row on a landscape tablet; on a narrower screen the two
+    QR buttons take the top row and the rest sit beneath.
+  - The Show QR button on the Bill tab itself is unchanged: it still follows
+    the method tapped just above it.
+
+## v2.1 — pushed to the tablet
+
+### After 1 November 2026
 
 ### Fixed
 - **A bill paid from package credit showed no payment method at all.** The
@@ -52,7 +73,7 @@ bottom of the Setup tab matches the newest entry here.
   came off, total and payment method. Voided bills are left out. The
   existing Download CSV, with a row per line item, is unchanged.
 
-## v2.1 — 1 November 2026
+### 1 November 2026
 
 ### Fixed
 - **Ticking bills no longer squeezes the row.** The tick box is positioned

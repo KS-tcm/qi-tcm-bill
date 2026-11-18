@@ -504,3 +504,13 @@ table.sh td small{display:block;font-family:var(--sans);font-size:11.5px;color:v
 .pay.paid{display:flex;align-items:center;justify-content:center;text-align:center;
   border-color:#9CC4AE;color:#2F6B4F;background:#EDF6F0;font-weight:600;font-size:12.5px;
   line-height:1.2;padding:9px 6px}
+
+/* Five buttons: both QR codes, plus Void or Issue, Close and Send. In one row
+   on a landscape tablet; narrower, the two QR buttons take the top row at
+   half width each, so they stay big targets, and the rest sit beneath. */
+.sheetbar.five{grid-template-columns:repeat(5,1fr)}
+@media(max-width:760px){
+  .sheetbar.five{grid-template-columns:repeat(6,1fr)}
+  .sheetbar.five .btn{grid-column:span 2;min-height:48px}
+  .sheetbar.five .btn.qrpay{grid-column:span 3;order:-1}
+}

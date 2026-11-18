@@ -5,7 +5,7 @@ import { $, esc, money, fmtDate, fmtTime, toast, emit, LOGO, LOGO_SRC } from "./
 import { S } from "./state.js";
 import { isVoid, discScopeNote } from "./money.js";
 import * as packages from "./packages.js";
-import { openQr, qrKeyFor, anyQrConfigured, initQr, QR_METHODS } from "./qr.js";
+import { openQr, initQr, QR_METHODS } from "./qr.js";
 
 /* What the customer actually hands over. */
 function billDue(bill){
@@ -136,32 +136,23 @@ export function renderSheet(bill, animate){
   const combined = !!bill.combined;
   $("btnVoid").hidden = !canVoid;
 
-  /* One tap from the bill to the QR, which is the moment she needs it: the
-     customer has just seen what they owe. If a payment method was picked
-     while billing the button goes straight to that QR; if not, it opens the
-     one that is set up and offers the other. */
+  /* Both QR buttons, always, whatever payment method was picked. Customers
+     often say how they will pay only at the moment of paying, or change
+     their mind, and going back to change the method just to reveal the
+     right QR is a hassle with someone waiting. The order is fixed so each
+     button stays where her thumb expects it. If an image has not been
+     uploaded the overlay says so, which is clearer than a missing button.
+     Not shown on a voided bill, or one package credit has fully covered —
+     there is nothing to pay. */
   const qrBtn = $("btnSheetQr");
   const qrBtn2 = $("btnSheetQr2");
-  const payKey = qrKeyFor(bill.pay);
-  let showQrBtn = !voided && (payKey || anyQrConfigured());
-  qrBtn2.hidden = true;
-
-  if (combined){
-    /* The whole point of this view is taking one payment, so both ways are
-       always offered rather than hidden behind a switcher. If an image has
-       not been uploaded the overlay says so, which is clearer than a button
-       that silently is not there. */
-    showQrBtn = true;
-    qrBtn.textContent = qrButtonLabel(QR_METHODS[0].pay);
-    qrBtn.dataset.method = QR_METHODS[0].pay;
-    qrBtn2.hidden = false;
-    qrBtn2.textContent = qrButtonLabel(QR_METHODS[1].pay);
-    qrBtn2.dataset.method = QR_METHODS[1].pay;
-  } else if (showQrBtn){
-    qrBtn.textContent = payKey ? qrButtonLabel(bill.pay) : "Show QR";
-    qrBtn.dataset.method = payKey ? bill.pay : firstConfigured();
-  }
+  const showQrBtn = !voided && (combined || billDue(bill) > 0);
+  qrBtn.textContent = qrButtonLabel(QR_METHODS[0].pay);
+  qrBtn.dataset.method = QR_METHODS[0].pay;
+  qrBtn2.textContent = qrButtonLabel(QR_METHODS[1].pay);
+  qrBtn2.dataset.method = QR_METHODS[1].pay;
   qrBtn.hidden = !showQrBtn;
+  qrBtn2.hidden = !showQrBtn;
 
   /* An estimate can be turned into a bill without going back, which is the
      order things actually happen in: show the price, they agree, they pay,
@@ -173,7 +164,8 @@ export function renderSheet(bill, animate){
                + (qrBtn2.hidden ? 0 : 1) + (isEstimate ? 1 : 0);
   const bar = $("sheetBar");
   bar.classList.toggle("three", shown_ === 3);
-  bar.classList.toggle("four", shown_ >= 4);
+  bar.classList.toggle("four", shown_ === 4);
+  bar.classList.toggle("five", shown_ >= 5);
 
   S.shown = bill;
   $("sheetWrap").hidden = false;
@@ -427,10 +419,6 @@ function qrButtonLabel(pay){
   return pay + " QR";
 }
 
-function firstConfigured(){
-  const hit = QR_METHODS.filter((m) => S.qr && S.qr[m.key])[0];
-  return hit ? hit.pay : QR_METHODS[0].pay;
-}
 
 export function initSheet(){
   initQr();
